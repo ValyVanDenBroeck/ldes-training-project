@@ -2,7 +2,7 @@
 
 LDES feed for EU Publications Office Corporate Body Authority Table
 
-This is a proof-of-concept [RDF-Connect](https://rdf-connect.github.io/) pipeline to produce a [DCAT-AP-Feed](https://semiceu.github.io/LDES-DCAT-AP-feeds/index.html) from the EU Publications Office's Corporate Body Authority Table, available at <https://op.europa.eu/en/web/eu-vocabularies/dataset/-/resource?uri=http://publications.europa.eu/resource/dataset/corporate-body>.
+This is a proof-of-concept [RDF-Connect](https://rdf-connect.github.io/) pipeline to produce an [LDES (Linked Data Event Stream)](https://semiceu.github.io/LinkedDataEventStreams/) from the EU Publications Office's Corporate Body Authority Table, available at <https://op.europa.eu/en/web/eu-vocabularies/dataset/-/resource?uri=http://publications.europa.eu/resource/dataset/corporate-body>.
 
 The pipeline is executed periodically to:
 1. Fetch the latest version of the Corporate Body SKOS vocabulary (`corporatebodies-skos.rdf`)
@@ -16,7 +16,7 @@ The LDES feed is kept as a collection of static documents which can be served vi
 The pipeline uses [RDF-Connect](https://rdf-connect.github.io/) processors to:
 1. **Fetch** the `corporatebodies-skos.rdf` file from the EU Publications Office
 2. **Detect changes** by comparing with previous state stored in LevelDB
-3. **Generate ActivityStreams** events (Create, Update, Delete) for changed corporate body resources
+3. **Generate ActivityStreams** events (Create, Update, Delete) for changed SKOS concepts
 4. **Bucketize** events using time-based fragmentation (monthly buckets)
 5. **Write** to disk as static LDES fragments
 
@@ -60,9 +60,9 @@ The Corporate Body Authority Table is maintained by the EU Publications Office a
 ## Additional Resources
 
 - [RDF-Connect Documentation](https://rdf-connect.github.io/)
-- [DCAT-AP Feed Specification](https://semiceu.github.io/LDES-DCAT-AP-feeds/)
-- [EU Vocabularies](https://op.europa.eu/en/web/eu-vocabularies)
 - [LDES Specification](https://semiceu.github.io/LinkedDataEventStreams/)
+- [EU Vocabularies](https://op.europa.eu/en/web/eu-vocabularies)
+- [SKOS Reference](https://www.w3.org/TR/skos-reference/)
 - [GitLab CI/CD Documentation](https://docs.gitlab.com/ee/ci/)
 - [GitLab Pages Documentation](https://docs.gitlab.com/ee/user/project/pages/)
 

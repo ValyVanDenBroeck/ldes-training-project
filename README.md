@@ -9,7 +9,7 @@ The pipeline is executed periodically to:
 2. Detect any changes compared to the previous version
 3. Write detected changes to the LDES feed for downstream consumers to ingest
 
-The LDES feed is kept as a collection of static documents which can be served via GitLab Pages or any static hosting platform.
+The LDES feed is kept as a collection of static documents which can be served via GitHub Pages or any static hosting platform.
 
 ## How it works
 

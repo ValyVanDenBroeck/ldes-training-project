@@ -6,7 +6,7 @@
 ║  table from the EU Publications Office using their RDF endpoint.  ║
 ║                                                                   ║
 ║  Dataset: Corporate Body (corporate-body)                         ║
-║  Source:  https://op.europa.eu/en/web/eu-vocabularies              ║
+║  Source:  https://op.europa.eu/en/web/eu-vocabularies             ║
 ║                                                                   ║
 ║  Usage:                                                           ║
 ║    from eu_vocabulary_monitor import CorporateBodyMonitor         ║

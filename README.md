@@ -28,26 +28,32 @@ The pipeline uses [RDF-Connect](https://rdf-connect.github.io/) processors to:
 
 ### Local development
 
+```bash
 cd pipeline
 npm install
 npx @rdfc/js-runner rdfc-pipeline.ttl
+```
 
 ## Architecture
 
+```text
 [EU Publications Office - Corporate Body Authority Table]
-    (corporatebodies-skos.rdf)
-                ↓
-       [HttpFetch Processor]
-                ↓
-      [DumpsToFeed Processor] → [LevelDB State]
-                ↓
-        [Sdsify Processor]
-                ↓
-       [Bucketize Processor] → [Feed State JSON]
-                ↓
-     [LdesDiskWriter Processor]
-                ↓
-         [docs/ directory] → [Static Hosting / GitLab Pages]
+              (corporatebodies-skos.rdf)
+                          ↓
+                 [HttpFetch Processor]
+                          ↓
+                [DumpsToFeed Processor] ←→ [LevelDB State]
+                          ↓
+                  [Sdsify Processor]
+                          ↓
+                 [Bucketize Processor] ←→ [Feed State JSON]
+                          ↓
+               [LdesDiskWriter Processor]
+                          ↓
+                   [docs/ directory]
+                          ↓
+            [Static Hosting / GitLab Pages]
+```
 
 ## Data Source
 

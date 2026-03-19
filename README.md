@@ -52,7 +52,7 @@ npx @rdfc/js-runner rdfc-pipeline.ttl
                           ↓
                    [docs/ directory]
                           ↓
-            [Static Hosting / GitLab Pages]
+            [Static Hosting / GitHub Pages]
 ```
 
 ## Data Source

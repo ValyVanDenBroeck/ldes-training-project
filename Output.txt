@@ -1,29 +1,5 @@
-PS C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline> npx js-runner --help
-node:internal/process/promises:394
-    triggerUncaughtException(err, true /* fromPromise */);
-    ^
-
-Error: 14 UNAVAILABLE: Name resolution failed for target dns:--help
-    at callErrorFromStatus (C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline\node_modules\@grpc\grpc-js\build\src\call.js:32:19)    
-    at Object.onReceiveStatus (C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline\node_modules\@grpc\grpc-js\build\src\client.js:421:73)
-    at Object.onReceiveStatus (C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline\node_modules\@grpc\grpc-js\build\src\client-interceptors.js:327:181)
-    at C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline\node_modules\@grpc\grpc-js\build\src\resolving-call.js:135:78
-    at process.processTicksAndRejections (node:internal/process/task_queues:85:11)
-for call at
-    at ServiceClientImpl.makeBidiStreamRequest (C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline\node_modules\@grpc\grpc-js\build\src\client.js:405:32)
-    at ServiceClientImpl.connect (C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline\node_modules\@grpc\grpc-js\build\src\make-client.js:105:19)
-    at start (file:///C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/node_modules/@rdfc/js-runner/lib/client.js:17:27)
-    at file:///C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/node_modules/@rdfc/js-runner/bin/runner.js:8:1
-    at ModuleJob.run (node:internal/modules/esm/module_job:430:25)
-    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:661:26)
-    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
-  code: 14,
-  details: 'Name resolution failed for target dns:--help',
-  metadata: Metadata {
-    internalRepr: Map(0) {},
-    opaqueData: Map(0) {},
-    options: {}
-  }
-}
-
-Node.js v24.14.1
+type node_modules\@rdfc\dumps-to-feed-processor-ts\processor.ttl
+type node_modules\@rdfc\http-utils-processor-ts\processors.ttl
+type node_modules\@rdfc\sds-processors-ts\configs\sdsify.ttl
+type node_modules\@rdfc\sds-processors-ts\configs\bucketizer.ttl
+type node_modules\@rdfc\sds-processors-ts\configs\ldes_disk_writer.ttl

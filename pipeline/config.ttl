@@ -1,1 +1,48 @@
+@prefix js: <https://w3id.org/conn/js#>.
+@prefix fno: <https://w3id.org/function/ontology#>.
+@prefix fnom: <https://w3id.org/function/vocabulary/mapping#>.
+@prefix ldes: <https://w3id.org/ldes#>.
+@prefix tree: <https://w3id.org/tree#>.
+@prefix rdfc: <https://w3id.org/conn#>.
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix sh: <http://www.w3.org/ns/shacl#>.
+@prefix dc: <http://purl.org/dc/terms/>.
 
+# Channel definitions
+<reader/channel> a rdfc:Channel;
+    rdfc:serializationFormat rdfc:Turtle.
+
+<bucketizer/channel> a rdfc:Channel;
+    rdfc:serializationFormat rdfc:Turtle.
+
+<feed/channel> a rdfc:Channel;
+    rdfc:serializationFormat rdfc:Turtle.
+
+# Step 1: Fetch the Corporate Body RDF dump
+<fetch> a js:HttpFetch;
+    js:url "http://publications.europa.eu/resource/dataset/corporate-body";
+    js:mediaType "application/rdf+xml";
+    js:output <reader/channel>.
+
+# Step 2: Convert dump to LDES feed (change detection)
+<dumpsToFeed> a js:DumpsToFeed;
+    js:input <reader/channel>;
+    js:output <bucketizer/channel>;
+    js:stateBasePath "../state";
+    js:ldesIdentifier <https://ValyVanDenBroeck.github.io/ldes-training-project/corporate-body>;
+    js:sourceIdentifier <http://publications.europa.eu/resource/dataset/corporate-body>.
+
+# Step 3: Bucketize (time-based fragmentation)
+<bucketize> a js:Bucketize;
+    js:input <bucketizer/channel>;
+    js:output <feed/channel>;
+    js:bucketType js:TimebasedBucketing;
+    js:k 50;
+    js:root <https://ValyVanDenBroeck.github.io/ldes-training-project/corporate-body>.
+
+# ── Step 4: Write static files for GitHub Pages ──────────
+<writeFiles> a js:FileWriter;
+    js:input <feed/channel>;
+    js:outputFolder "../docs/corporate-body".

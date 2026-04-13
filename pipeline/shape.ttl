@@ -2,6 +2,6 @@
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 
-<#ActivityShape> a sh:NodeShape ;
+<https://ValyVanDenBroeck.github.io/ldes-training-project/shape.ttl#ActivityShape> a sh:NodeShape ;
     rdfs:comment "Shape targeting SKOS Concepts in the Corporate Body vocabulary" ;
     sh:targetClass skos:Concept .

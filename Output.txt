@@ -1,3 +1,22 @@
-PS C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline> npx js-runner rdfc-pipeline.ttl 
-2026-04-13T20:11:31.733Z {file-utils-processors-ts} [globRead] info: Reading file 'C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline\query.rq' (from glob pattern 'C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/query.rq')
-2026-04-13T20:11:31.740Z {file-utils-processors-ts} [globRead] info: Reading file 'C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline\metadata.ttl' (from glob pattern 'C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/metadata.ttl')
+s\@grpc\grpc-js\build\src\client.js:421:73)
+    at Object.onReceiveStatus (C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline\node_modules\@grpc\grpc-js\build\src\client-interceptors.js:327:181)
+    at C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline\node_modules\@grpc\grpc-js\build\src\resolving-call.js:135:78
+    at process.processTicksAndRejections (node:internal/process/task_queues:85:11)
+for call at
+    at ServiceClientImpl.makeBidiStreamRequest (C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline\node_modules\@grpc\grpc-js\build\src\client.js:405:32)
+    at ServiceClientImpl.connect (C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline\node_modules\@grpc\grpc-js\build\src\make-client.js:105:19)
+    at start (file:///C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/node_modules/@rdfc/js-runner/lib/client.js:17:27)
+    at file:///C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/node_modules/@rdfc/js-runner/bin/runner.js:8:1
+    at ModuleJob.run (node:internal/modules/esm/module_job:430:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:661:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  code: 14,
+  details: 'Name resolution failed for target dns:rdfc-pipeline-corporate-body.ttl',
+  metadata: Metadata {
+    internalRepr: Map(0) {},
+    opaqueData: Map(0) {},
+    options: {}
+  }
+}
+
+Node.js v24.14.1

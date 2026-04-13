@@ -75,7 +75,7 @@
 
 # Step 1: Fetch the Corporate Body RDF dump
 [ ] a js:HttpFetch;
-    js:url "https://publications.europa.eu/webapi/rdf/sparql?query=PREFIX%20skos%3A%20%3Chttp%3A//www.w3.org/2004/02/skos/core%23%3E%0ACONSTRUCT%20%7B%20%3Fs%20%3Fp%20%3Fo%20%7D%0AWHERE%20%7B%0A%20%20GRAPH%20%3Chttp%3A//publications.europa.eu/resource/authority/corporate-body%3E%20%7B%0A%20%20%20%20%3Fs%20%3Fp%20%3Fo%20.%0A%20%20%7D%0A%7D&format=application%2Frdf%2Bxml";
+   js:url "https://op.europa.eu/o/opportal-service/euvoc-download-handler?cellarURI=http%3A%2F%2Fpublications.europa.eu%2Fresource%2Fdistribution%2Fcorporate-body%2F20260318-0%2Frdf%2Fskos_core%2Fcorporatebodies-skos.rdf&fileName=corporatebodies-skos.rdf";
     js:writer <raw/writer>;
     js:options [
         js:closeOnEnd true;

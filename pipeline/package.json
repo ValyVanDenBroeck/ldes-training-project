@@ -1,1 +1,16 @@
-
+{
+    "name": “ldes-training",
+    "version": "1.0.0",
+    "description": “LDES for EU Corporate Body Vocabulary",
+    "type": "module",
+    "author": "Ieben Smessaert",
+    "contributors": [<YOUR NAME>],
+    "license": "MIT",
+    "dependencies": {
+      "@rdfc/dumps-to-feed-processor-ts": "^1.2.0",
+      "@rdfc/http-utils-processor-ts": "^0.1.2",
+      "@rdfc/file-utils-processors-ts": "^0.6.0",
+      "@rdfc/js-runner": "^1.0.0",
+      "@rdfc/sds-processors-ts": "^1.4.2"
+    }
+  }

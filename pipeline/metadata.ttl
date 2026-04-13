@@ -1,0 +1,23 @@
+@prefix sds:    <https://w3id.org/sds#> .
+@prefix dcat:   <https://www.w3.org/ns/dcat#> .
+@prefix ldes:   <https://w3id.org/ldes#> .
+@prefix as:     <https://www.w3.org/ns/activitystreams#> .
+@prefix p-plan: <http://purl.org/net/p-plan#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+
+<https://ValyVanDenBroeck.github.io/ldes-training-project/corporate-body>
+    a sds:Stream ;
+    p-plan:wasGeneratedBy [
+        a p-plan:Activity ;
+        rdfs:comment "Pipeline to publish Corporate Body vocabulary as LDES" 
+    ] ;
+    sds:carries [ a sds:Member ] ;
+    sds:shape <https://semiceu.github.io/LDES-DCAT-AP-feeds/shape.ttl#ActivityShape> ;
+    sds:dataset [
+        a dcat:Dataset ;
+        dcat:title "EU Corporate Body Vocabulary LDES Feed"@en ;
+        dcat:publisher <http://publications.europa.eu/resource/authority/corporate-body> ;
+        ldes:timestampPath as:published ;
+        dcat:identifier <http://publications.europa.eu/resource/dataset/corporate-body>
+    ] .

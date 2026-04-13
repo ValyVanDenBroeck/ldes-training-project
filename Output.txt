@@ -1,7 +1,7 @@
-body.ttl
-2026-04-13T21:51:35.980Z {file-utils-processors-ts} [globRead] info: Reading file 'C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline\metadata.ttl' (from glob pattern 'C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/metadata.ttl')
+PS C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline> npx @rdfc/js-runner rdfc-pipeline-corporate-body.ttl
+2026-04-13T23:34:45.033Z {file-utils-processors-ts} [globRead] info: Reading file 'C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline\metadata.ttl' (from glob pattern 'C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/metadata.ttl')
 A sds:stream can only carry one specified shape, not 0
 A sds:stream can only carry one specified shape, not 0
-2026-04-13T21:51:41.207Z {dumps-to-feed-processor-ts} [processor] info: All input streams ended, closing writer.
-2026-04-13T21:51:41.208Z {sds-processors-ts} [sdsify] info: Input channel was closed down
-2026-04-13T21:51:41.210Z {sds-processors-ts} [ExitHandler] error: [handleExit] Uncaught Exception: Error - ENOENT: no such file or directory, open 'C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline\feed-state\buckets_save.json'
+2026-04-13T23:34:49.572Z {dumps-to-feed-processor-ts} [processor] info: All input streams ended, closing writer.
+2026-04-13T23:34:49.575Z {sds-processors-ts} [sdsify] info: Input channel was closed down
+PS C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline> 

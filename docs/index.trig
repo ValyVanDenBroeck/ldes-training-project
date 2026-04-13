@@ -1,0 +1,37 @@
+<https://ValyVanDenBroeck.github.io/ldes-training-project/corporate-body> a <https://w3id.org/sds#Stream>;
+    <http://purl.org/net/p-plan#wasGeneratedBy> _:b15_n3-313;
+    <https://w3id.org/sds#carries> _:b15_n3-314, _:b15_df_7_0;
+    <https://w3id.org/sds#shape> <https://ValyVanDenBroeck.github.io/ldes-training-project/shape.ttl#ActivityShape>;
+    <https://w3id.org/sds#dataset> _:b15_n3-315;
+    <http://www.w3.org/ns/prov#wasGeneratedBy> _:b15_df_9_0.
+_:b15_n3-313 a <http://purl.org/net/p-plan#Activity>;
+    <http://www.w3.org/2000/01/rdf-schema#comment> "Pipeline to publish EU Corporate Body vocabulary as LDES".
+_:b15_n3-314 a <https://w3id.org/sds#Member>.
+_:b15_n3-315 a <https://www.w3.org/ns/dcat#Dataset>;
+    <https://www.w3.org/ns/dcat#title> "EU Corporate Body Vocabulary LDES Feed"@en;
+    <https://www.w3.org/ns/dcat#publisher> <http://publications.europa.eu/resource/authority/corporate-body>;
+    <https://w3id.org/ldes#timestampPath> <https://www.w3.org/ns/activitystreams#published>;
+    <https://www.w3.org/ns/dcat#identifier> <http://publications.europa.eu/resource/dataset/corporate-body>.
+_:b15_df_9_0 a <http://purl.org/net/p-plan#Activity>, <https://w3id.org/ldes#Bucketization>;
+    <http://www.w3.org/ns/prov#startedAtTime> "2026-04-13T23:34:45.212Z";
+    <http://www.w3.org/ns/prov#used> _:b15_n3-13, <https://ValyVanDenBroeck.github.io/ldes-training-project/corporate-body>.
+_:b15_n3-13 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> _:b15_n3-14;
+    <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil>.
+_:b15_n3-14 a <https://w3id.org/tree#TimebasedFragmentation>;
+    <https://w3id.org/tree#timestampPath> <https://www.w3.org/ns/activitystreams#published>;
+    <https://w3id.org/tree#maxSize> 100;
+    <https://w3id.org/tree#k> 4;
+    <https://w3id.org/tree#minBucketSpan> 2592000.
+<index.trig> a <https://w3id.org/ldes#EventStream>, <https://www.w3.org/ns/dcat#Dataset>;
+    <https://www.w3.org/ns/dcat#title> "EU Corporate Body Vocabulary LDES Feed"@en;
+    <https://www.w3.org/ns/dcat#publisher> <http://publications.europa.eu/resource/authority/corporate-body>;
+    <https://w3id.org/ldes#timestampPath> <https://www.w3.org/ns/activitystreams#published>;
+    <https://www.w3.org/ns/dcat#identifier> <http://publications.europa.eu/resource/dataset/corporate-body>;
+    <https://w3id.org/tree#shape> <https://ValyVanDenBroeck.github.io/ldes-training-project/shape.ttl#ActivityShape>;
+    <https://w3id.org/tree#view> <https_3A_2F_2FValyVanDenBroeck.github.io_2Fldes-training-project_2Fcorporate-body\\index.trig>.
+<https_3A_2F_2FValyVanDenBroeck.github.io_2Fldes-training-project_2Fcorporate-body\\index.trig> a <https://w3id.org/tree#Node>;
+    <https://w3id.org/tree#viewDescription> <https_3A_2F_2FValyVanDenBroeck.github.io_2Fldes-training-project_2Fcorporate-body\\index.trig#description>.
+<https_3A_2F_2FValyVanDenBroeck.github.io_2Fldes-training-project_2Fcorporate-body\\index.trig#description> a <https://w3id.org/tree#ViewDescription>;
+    <http://purl.org/dc/terms/endpointURL> <https_3A_2F_2FValyVanDenBroeck.github.io_2Fldes-training-project_2Fcorporate-body\\index.trig>;
+    <http://purl.org/dc/terms/servesDataset> <index.trig>;
+    <https://w3id.org/ldes#managedBy> <https://ValyVanDenBroeck.github.io/ldes-training-project/corporate-body>.

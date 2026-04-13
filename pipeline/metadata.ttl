@@ -12,9 +12,8 @@
         a p-plan:Activity ;
         rdfs:comment "Pipeline to publish EU Corporate Body vocabulary as LDES"
     ] ;
-    sds:carries [
-        a sds:Member ;
-    ] ;
+    sds:carries [ a sds:Member ] ;
+    sds:shape <https://ValyVanDenBroeck.github.io/ldes-training-project/shape.ttl#ActivityShape> ;
     sds:dataset [
         a dcat:Dataset ;
         dcat:title "EU Corporate Body Vocabulary LDES Feed"@en ;

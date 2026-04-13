@@ -1,6 +1,0 @@
-PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-SELECT DISTINCT ?entity
-WHERE {
-  VALUES ?type { skos:Concept skos:ConceptScheme }
-  ?entity a ?type .
-}

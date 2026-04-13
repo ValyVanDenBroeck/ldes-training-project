@@ -14,6 +14,7 @@
 <> owl:imports <./node_modules/@rdfc/sds-processors-ts/configs/sdsify.ttl>.
 <> owl:imports <./node_modules/@rdfc/sds-processors-ts/configs/ldes_disk_writer.ttl>.
 <> owl:imports <./shape.ttl>.
+<> owl:imports <./metadata.ttl>.
 
 
 #########################################

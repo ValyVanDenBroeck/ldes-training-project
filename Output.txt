@@ -1,0 +1,3 @@
+PS C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline> npx js-runner rdfc-pipeline.ttl
+2026-04-13T19:12:59.199Z {file-utils-processors-ts} [globRead] info: Reading file 'C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline\query.rq' (from glob pattern 'C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/query.rq')
+2026-04-13T19:12:59.206Z {file-utils-processors-ts} [globRead] info: Reading file 'C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline\metadata.ttl' (from glob pattern 'C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/metadata.ttl')

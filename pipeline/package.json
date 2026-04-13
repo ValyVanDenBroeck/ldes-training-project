@@ -1,7 +1,7 @@
 {
-    "name": “ldes-training",
+    "name": "ldes-training",
     "version": "1.0.0",
-    "description": “LDES for EU Corporate Body Vocabulary",
+    "description": "LDES for EU Corporate Body Vocabulary",
     "type": "module",
     "author": "Ieben Smessaert",
     "contributors": ["Valy Van den Broeck"],

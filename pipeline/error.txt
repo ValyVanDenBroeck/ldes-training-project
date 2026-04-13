@@ -1,0 +1,172 @@
+
+2026-04-13T17:15:15.614Z {file-utils-processors-ts} [globRead] info: Reading file 'C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline\query.rq' (from glob pattern 'C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/query.rq')
+2026-04-13T17:15:15.624Z {file-utils-processors-ts} [globRead] info: Reading file 'C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline\metadata.ttl' (from glob pattern 'C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/metadata.ttl')
+Error: LensError: Field is not defined and required
+    at BasicLens._exec (file:///C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/node_modules/rdf-lens/dist/shacl.js:25:27)
+    at BasicLens.execute (file:///C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/node_modules/rdf-lens/dist/lens.js:105:21)
+    at BasicLens._exec (file:///C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/node_modules/rdf-lens/dist/lens.js:101:25)
+    at BasicLens.execute (file:///C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/node_modules/rdf-lens/dist/lens.js:105:21)
+    at BasicLens._exec (file:///C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/node_modules/rdf-lens/dist/lens.js:101:25)
+    at BasicLens.execute (file:///C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/node_modules/rdf-lens/dist/lens.js:105:21)
+    at BasicLens._exec (file:///C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/node_modules/rdf-lens/dist/lens.js:94:28)
+    at BasicLens.execute (file:///C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/node_modules/rdf-lens/dist/lens.js:105:21)
+    at file:///C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/node_modules/rdf-lens/dist/lens.js:55:43
+    at Array.map (<anonymous>) {
+  lineage: [
+    { name: 'id', opts: '_:n3-10' },
+    { name: 'shape', opts: [Object] },
+    { name: 'processing field', opts: [Object] },
+    { name: 'pred', opts: '<https://w3id.org/conn/js#output>' },
+    {
+      name: 'extracting class',
+      opts: 'https://w3id.org/conn#WriterChannel'
+    },
+    {
+      name: 'id',
+      opts: '<C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/feed/writer>'
+    },
+    { name: 'shape', opts: [Object] },
+    { name: 'processing field', opts: [Object] },
+    { name: 'processing field', opts: [Object] },
+    {
+      name: 'pred',
+      opts: '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>'
+    },
+    { name: 'processing field', opts: [Object] },
+    {
+      name: 'extracting class',
+      opts: 'https://w3id.org/rdf-lens/ontology#TypedExtract'
+    },
+    {
+      name: 'Found type',
+      opts: 'https://w3id.org/conn/js#JsWriterChannel'
+    },
+    { name: 'TypedExtract', opts: undefined },
+    {
+      name: 'id',
+      opts: '<C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/feed/writer>'
+    },
+    { name: 'shape', opts: [Object] },
+    { name: 'processing field', opts: [Object] },
+    { name: 'invPred', opts: '<https://w3id.org/conn#writer>' },
+    { name: 'extracting class', opts: 'https://w3id.org/conn#Channel' },
+    { name: 'id', opts: '_:n3-2' },
+    { name: 'shape', opts: [Object] },
+    { name: 'processing field', opts: [Object] },
+    { name: 'processing field', opts: [Object] },
+    { name: 'pred', opts: '<https://w3id.org/conn#reader>' },
+    { name: 'processing field', opts: [Object] },
+    { name: 'pred', opts: '<https://w3id.org/conn#writer>' },
+    {
+      name: 'id',
+      opts: '<C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/feed/writer>'
+    },
+    { name: 'shape', opts: [Object] },
+    { name: 'processing field', opts: [Object] },
+    { name: 'processing field', opts: [Object] },
+    {
+      name: 'pred',
+      opts: '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>'
+    },
+    { name: 'processing field', opts: [Object] },
+    {
+      name: 'extracting class',
+      opts: 'https://w3id.org/rdf-lens/ontology#TypedExtract'
+    },
+    {
+      name: 'Found type',
+      opts: 'https://w3id.org/conn/js#JsWriterChannel'
+    },
+    { name: 'TypedExtract', opts: undefined },
+    { name: 'processing field', opts: [Object] },
+    { name: 'pred', opts: '<https://w3id.org/conn/js#feedname>' },
+    { name: 'processing field', opts: [Object] },
+    { name: 'pred', opts: '<https://w3id.org/conn/js#flush>' },
+    { name: 'processing field', opts: [Object] },
+    { name: 'pred', opts: '<https://w3id.org/conn/js#dump>' },
+    {
+      name: 'extracting class',
+      opts: 'https://w3id.org/conn#ReaderChannel'
+    },
+    {
+      name: 'id',
+      opts: '<C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/raw/reader>'
+    },
+    { name: 'shape', opts: [Object] },
+    { name: 'processing field', opts: [Object] },
+    { name: 'processing field', opts: [Object] },
+    {
+      name: 'pred',
+      opts: '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>'
+    },
+    { name: 'processing field', opts: [Object] },
+    {
+      name: 'extracting class',
+      opts: 'https://w3id.org/rdf-lens/ontology#TypedExtract'
+    },
+    {
+      name: 'Found type',
+      opts: 'https://w3id.org/conn/js#JsReaderChannel'
+    },
+    { name: 'TypedExtract', opts: undefined },
+    {
+      name: 'id',
+      opts: '<C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/raw/reader>'
+    },
+    { name: 'shape', opts: [Object] },
+    { name: 'processing field', opts: [Object] },
+    { name: 'invPred', opts: '<https://w3id.org/conn#reader>' },
+    { name: 'extracting class', opts: 'https://w3id.org/conn#Channel' },
+    { name: 'id', opts: '_:n3-0' },
+    { name: 'shape', opts: [Object] },
+    { name: 'processing field', opts: [Object] },
+    { name: 'processing field', opts: [Object] },
+    { name: 'pred', opts: '<https://w3id.org/conn#reader>' },
+    { name: 'processing field', opts: [Object] },
+    { name: 'pred', opts: '<https://w3id.org/conn#writer>' },
+    {
+      name: 'id',
+      opts: '<C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/raw/reader>'
+    },
+    { name: 'shape', opts: [Object] },
+    { name: 'processing field', opts: [Object] },
+    { name: 'processing field', opts: [Object] },
+    {
+      name: 'pred',
+      opts: '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>'
+    },
+    { name: 'processing field', opts: [Object] },
+    {
+      name: 'extracting class',
+      opts: 'https://w3id.org/rdf-lens/ontology#TypedExtract'
+    },
+    {
+      name: 'Found type',
+      opts: 'https://w3id.org/conn/js#JsReaderChannel'
+    },
+    { name: 'TypedExtract', opts: undefined },
+    { name: 'processing field', opts: [Object] },
+    {
+      name: 'pred',
+      opts: '<https://w3id.org/conn/js#dumpContentType>'
+    },
+    { name: 'processing field', opts: [Object] },
+    {
+      name: 'pred',
+      opts: '<https://w3id.org/conn/js#focusNodesStrategy>'
+    },
+    { name: 'processing field', opts: [Object] },
+    { name: 'pred', opts: '<https://w3id.org/conn/js#nodeShapeIri>' }
+  ]
+}
+Error: Field is not defined and required
+    at BasicLens._exec (file:///C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/node_modules/rdf-lens/dist/shacl.js:25:27)
+    at BasicLens.execute (file:///C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/node_modules/rdf-lens/dist/lens.js:105:21)
+    at BasicLens._exec (file:///C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/node_modules/rdf-lens/dist/lens.js:101:25)
+    at BasicLens.execute (file:///C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/node_modules/rdf-lens/dist/lens.js:105:21)
+    at BasicLens._exec (file:///C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/node_modules/rdf-lens/dist/lens.js:101:25)
+    at BasicLens.execute (file:///C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/node_modules/rdf-lens/dist/lens.js:105:21)
+    at BasicLens._exec (file:///C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/node_modules/rdf-lens/dist/lens.js:94:28)
+    at BasicLens.execute (file:///C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/node_modules/rdf-lens/dist/lens.js:105:21)
+    at file:///C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/node_modules/rdf-lens/dist/lens.js:55:43
+    at Array.map (<anonymous>)

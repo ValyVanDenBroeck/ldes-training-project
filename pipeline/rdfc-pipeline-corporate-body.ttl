@@ -82,7 +82,7 @@
     js:flush "false"^^xsd:boolean;
     js:dumpContentType "application/rdf+xml";
     js:focusNodesStrategy "extract";
-    js:nodeShapeIri "./shape.ttl#ActivityShape";
+    js:nodeShapeIri "https://ValyVanDenBroeck.github.io/ldes-training-project/shape.ttl#ActivityShape";
     js:dbDir <./leveldb/>.
 
 # Step 3: Wrap as individual SDS records

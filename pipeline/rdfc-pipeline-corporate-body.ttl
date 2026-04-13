@@ -1,0 +1,126 @@
+@prefix owl: <http://www.w3.org/2002/07/owl#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix rdfc: <https://w3id.org/rdf-connect#>.
+@prefix tree: <https://w3id.org/tree#>.
+@prefix as: <https://www.w3.org/ns/activitystreams#>.
+
+#########################################
+### Import runners and processors
+#########################################
+<> owl:imports <./node_modules/@rdfc/js-runner/index.ttl>,
+  <./node_modules/@rdfc/file-utils-processors-ts/processors.ttl>,
+  <./node_modules/@rdfc/http-utils-processor-ts/processors.ttl>,
+  <./node_modules/@rdfc/dumps-to-feed-processor-ts/processor.ttl>,
+  <./node_modules/@rdfc/sds-processors-ts/configs/sdsify.ttl>,
+  <./node_modules/@rdfc/sds-processors-ts/configs/bucketizer.ttl>,
+  <./node_modules/@rdfc/sds-processors-ts/configs/ldes_disk_writer.ttl>.
+
+#########################################
+# Channel definitions (7 channels)
+#########################################
+
+# Data channel from rdfc:HttpFetch to rdfc:DumpsToFeed
+<rawData> a rdfc:Reader, rdfc:Writer.
+
+# Data channel from rdfc:GlobRead to rdfc:DumpsToFeed (SPARQL query)
+<query> a rdfc:Reader, rdfc:Writer.
+
+# Data channel from rdfc:DumpsToFeed to rdfc:Sdsify
+<asStream> a rdfc:Reader, rdfc:Writer.
+
+# Data channel from rdfc:Sdsify to rdfc:Bucketize
+<sdsMembers> a rdfc:Reader, rdfc:Writer.
+
+# Data channel from rdfc:Bucketize to rdfc:LdesDiskWriter
+<bucketizedMembers> a rdfc:Reader, rdfc:Writer.
+
+# Metadata channel from rdfc:GlobRead to rdfc:Bucketize
+<metadata1> a rdfc:Reader, rdfc:Writer.
+
+# Metadata channel from rdfc:Bucketize to rdfc:LdesDiskWriter
+<metadata2> a rdfc:Reader, rdfc:Writer.
+
+#########################################
+### Define the pipeline
+#########################################
+<> a rdfc:Pipeline;
+  rdfc:consistsOf [
+    rdfc:instantiates rdfc:NodeRunner;
+    rdfc:processor <fetcher>,
+      <queryReader>,
+      <changeDetector>,
+      <sdsAnnotator>,
+      <metadataReader>,
+      <bucketizer>,
+      <diskWriter>;
+  ].
+
+#########################################
+# Processor definitions (7 processors)
+#########################################
+
+# Step 1: Fetch the Corporate Body RDF dump
+<fetcher> a rdfc:HttpFetch;
+  rdfc:url "https://op.europa.eu/o/opportal-service/euvoc-download-handler?cellarURI=http%3A%2F%2Fpublications.europa.eu%2Fresource%2Fdistribution%2Fcorporate-body%2F20260318-0%2Frdf%2Fskos_core%2Fcorporatebodies-skos.rdf&fileName=corporatebodies-skos.rdf";
+  rdfc:writer <rawData>;
+  rdfc:options [
+    rdfc:closeOnEnd "true"^^xsd:boolean;
+    rdfc:outputAsStream "true"^^xsd:boolean;
+  ].
+
+# Step 2: Read SPARQL query for focus node extraction
+<queryReader> a rdfc:GlobRead;
+  rdfc:glob "./query.rq";
+  rdfc:output <query>;
+  rdfc:closeOnEnd "true"^^xsd:boolean.
+
+# Step 3: Detect changes and generate ActivityStreams events
+<changeDetector> a rdfc:DumpsToFeed;
+  rdfc:dump <rawData>;
+  rdfc:readAsStream "true"^^xsd:boolean;
+  rdfc:output <asStream>;
+  rdfc:feedname "corporate-body";
+  rdfc:flush "false"^^xsd:boolean;
+  rdfc:dumpContentType "application/rdf+xml";
+  rdfc:focusNodesStrategy "sparql";
+  rdfc:focusNodes <query>;
+  rdfc:nodeShapeIri "./shape.ttl";
+  rdfc:dbDir "./state/".
+
+# Step 4: Wrap as individual SDS records
+<sdsAnnotator> a rdfc:Sdsify;
+  rdfc:input <asStream>;
+  rdfc:readAsStream "true"^^xsd:boolean;
+  rdfc:output <sdsMembers>;
+  rdfc:stream "https://ValyVanDenBroeck.github.io/ldes-training-project/corporate-body";
+  rdfc:typeFilter as:Create, as:Update, as:Delete.
+
+# Step 5: Read LDES metadata
+<metadataReader> a rdfc:GlobRead;
+  rdfc:glob "./metadata.ttl";
+  rdfc:output <metadata1>;
+  rdfc:closeOnEnd "true"^^xsd:boolean.
+
+# Step 6: Bucketize with time-based fragmentation (monthly buckets)
+<bucketizer> a rdfc:Bucketize;
+  rdfc:channels [
+    rdfc:dataInput <sdsMembers>;
+    rdfc:dataOutput <bucketizedMembers>;
+    rdfc:metadataInput <metadata1>;
+    rdfc:metadataOutput <metadata2>;
+  ];
+  rdfc:bucketizeStrategy ( [
+    a tree:TimebasedFragmentation;
+    tree:timestampPath as:published;
+    tree:maxSize 100;
+    tree:k 4;
+    tree:minBucketSpan 2592000;
+  ] );
+  rdfc:savePath "./state/bucketize-state.json";
+  rdfc:outputStreamId "https://ValyVanDenBroeck.github.io/ldes-training-project/corporate-body".
+
+# Step 7: Write static LDES fragments to disk for GitHub Pages
+<diskWriter> a rdfc:LdesDiskWriter;
+  rdfc:dataInput <bucketizedMembers>;
+  rdfc:metadataInput <metadata2>;
+  rdfc:directory "../docs".

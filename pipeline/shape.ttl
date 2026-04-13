@@ -1,27 +1,7 @@
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
-@prefix as:   <https://www.w3.org/ns/activitystreams#> .
-@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 
-# Generic ActivityStreams shape for LDES members.
-# Describes the event wrapper (Create/Update/Delete), NOT the source data.
-# Works for any data type (SKOS, DCAT, etc.)
-
 <#ActivityShape> a sh:NodeShape ;
-    rdfs:comment "Shape describing ActivityStreams events wrapping LDES members" ;
-    sh:xone (
-        [ sh:targetClass as:Create ]
-        [ sh:targetClass as:Update ]
-        [ sh:targetClass as:Delete ]
-    ) ;
-    sh:property [
-        sh:path as:published ;
-        sh:datatype xsd:dateTime ;
-        sh:minCount 1 ;
-        sh:maxCount 1 ;
-    ] ;
-    sh:property [
-        sh:path as:object ;
-        sh:minCount 1 ;
-        sh:maxCount 1 ;
-    ] .
+    rdfs:comment "Shape targeting SKOS Concepts in the Corporate Body vocabulary" ;
+    sh:targetClass skos:Concept .

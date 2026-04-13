@@ -4,7 +4,7 @@
     "description": “LDES for EU Corporate Body Vocabulary",
     "type": "module",
     "author": "Ieben Smessaert",
-    "contributors": [<YOUR NAME>],
+    "contributors": ["Valy Van den Broeck"],
     "license": "MIT",
     "dependencies": {
       "@rdfc/dumps-to-feed-processor-ts": "^1.2.0",

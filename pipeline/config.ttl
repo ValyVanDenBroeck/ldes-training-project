@@ -42,7 +42,7 @@
     js:k 50;
     js:root <https://ValyVanDenBroeck.github.io/ldes-training-project/corporate-body>.
 
-# ── Step 4: Write static files for GitHub Pages ──────────
+# Step 4: Write static files for GitHub Pages
 <writeFiles> a js:FileWriter;
     js:input <feed/channel>;
     js:outputFolder "../docs/corporate-body".

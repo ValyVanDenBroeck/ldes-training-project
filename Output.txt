@@ -1,11 +1,1 @@
-PS C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline> $env:LOG_LEVEL="debug"
-PS C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline> npx @rdfc/js-runner rdfc-pipeline-corporate-body.ttl
-2026-04-14T00:34:51.102Z {file-utils-processors-ts} [globRead] info: Reading file 'C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline\shape.ttl' (from glob pattern 'C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/shape.ttl')
-2026-04-14T00:34:51.110Z {file-utils-processors-ts} [globRead] info: Reading file 'C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline\metadata.ttl' (from glob pattern 'C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/metadata.ttl')
-2026-04-14T00:34:54.374Z {http-utils-processor-ts} [httpFetch] debug: Executing request to 'https://op.europa.eu/o/opportal-service/euvoc-download-handler?cellarURI=http%3A%2F%2Fpublications.europa.eu%2Fresource%2Fdistribution%2Fcorporate-body%2F20260318-0%2Frdf%2Fskos_core%2Fcorporatebodies-skos.rdf&fileName=corporatebodies-skos.rdf'...
-A sds:stream can only carry one specified shape, not 0
-A sds:stream can only carry one specified shape, not 0
-2026-04-14T00:34:54.401Z {sds-processors-ts} [ldesDiskWriter] debug: [metadata] Got input with 27 quads2026-04-14T00:34:57.904Z {dumps-to-feed-processor-ts} [processor] debug: Finished processing the stream. Closing the leveldb.
-2026-04-14T00:34:57.905Z {dumps-to-feed-processor-ts} [processor] info: All input streams ended, closing writer.
-2026-04-14T00:34:57.906Z {sds-processors-ts} [sdsify] info: Input channel was closed down
-PS C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline> 
+Invoke-WebRequest -Uri "https://op.europa.eu/o/opportal-service/euvoc-download-handler?cellarURI=http%3A%2F%2Fpublications.europa.eu%2Fresource%2Fdistribution%2Fcorporate-body%2F20260318-0%2Frdf%2Fskos_core%2Fcorporatebodies-skos.rdf&fileName=corporatebodies-skos.rdf" -OutFile dump.rdf

@@ -1,164 +1,662 @@
-PS C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline>  $env:LOG_LEVEL="debug"
+PS C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline> $env:LOG_LEVEL="debug"
 PS C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline> npx @rdfc/js-runner rdfc-pipeline-corporate-body.ttl
-dump.rdf' (from glob pattern 'C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/dump.rdf')
-2026-04-14T00:42:55.882Z {file-utils-processors-ts} [globRead] info: Reading file 'C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline\shape.ttl' (from glob pattern 'C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/shape.ttl')
-2026-04-14T00:42:55.885Z {file-utils-processors-ts} [globRead] info: Reading file 'C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline\metadata.ttl' (from glob pattern 'C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/metadata.ttl')
+2026-04-14T00:53:25.845Z {file-utils-processors-ts} [globRead] info: Reading file 'C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline\shape.ttl' (from glob pattern 'C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/shape.ttl')
+2026-04-14T00:53:25.853Z {file-utils-processors-ts} [globRead] info: Reading file 'C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline\focusNodes.sparql' (from glob pattern 'C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/focusNodes.sparql')
+2026-04-14T00:53:25.858Z {file-utils-processors-ts} [globRead] info: Reading file 'C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline\metadata.ttl' (from glob pattern 'C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/metadata.ttl')
+2026-04-14T00:53:30.084Z {http-utils-processor-ts} [httpFetch] debug: Executing request to 'https://op.europa.eu/o/opportal-service/euvoc-download-handler?cellarURI=http%3A%2F%2Fpublications.europa.eu%2Fresource%2Fdistribution%2Fcorporate-body%2F20260318-0%2Frdf%2Fskos_core%2Fcorporatebodies-skos.rdf&fileName=corporatebodies-skos.rdf'...
 A sds:stream can only carry one specified shape, not 0
 A sds:stream can only carry one specified shape, not 0
-2026-04-14T00:42:59.045Z {sds-processors-ts} [ldesDiskWriter] debug: [metadata] Got input with 27 quads
-2026-04-14T00:43:01.165Z {dumps-to-feed-processor-ts} [processor] debug: Finished processing the stream. Closing the leveldb.
-2026-04-14T00:43:01.173Z {dumps-to-feed-processor-ts} [processor] info: All input streams ended, closing writer.
-2026-04-14T00:43:01.174Z {sds-processors-ts} [sdsify] info: Input channel was closed down
-PS C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline> Get-Content node_modules/@rdfc/dumps-to-feed-processor-ts/dist/index.js -TotalCount 150
->> 
-import { rdfDereferencer } from "rdf-dereference";
-import { CBDShapeExtractor } from "extract-cbd-shape";
-import { createHash } from 'node:crypto';
-import { RdfStore } from 'rdf-stores';
-import { DataFactory } from 'rdf-data-factory';
-import { Writer as NWriter } from 'n3';
-import { Level } from "level";
-import { QueryEngine } from "@comunica/query-sparql";
-import { rdfParser } from "rdf-parse";
-import { arrayifyStream } from "arrayify-stream";
-import streamifyString from "streamify-string";
-import { streamifyArray } from "streamify-array";
-import * as path from "path";
-import { getLoggerFor } from "./utils/logUtil.js";
-import Queue from "queue-fifo";
-import { Readable } from 'stream';
-import { canonize } from 'rdf-canonize';
-const logger = getLoggerFor("processor");
-const df = new DataFactory();
-const engine = new QueryEngine();
-async function loadQuadStreamInStore(store, quadStream) {
-    return new Promise((resolve, reject) => {
-        store.import(quadStream).on("end", resolve).on("error", reject);
-    });
-}
-async function processActivity(writer, quads, type, iri, hash) {
-    let nWriter = new NWriter({ "format": "application/trig" });
-    let subject = df.namedNode("#" + hash);
-    nWriter.addQuads([
-        df.quad(subject, df.namedNode("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"), type),
-        df.quad(subject, df.namedNode("https://www.w3.org/ns/activitystreams#object"), iri),
-        df.quad(subject, df.namedNode("https://www.w3.org/ns/activitystreams#published"), df.literal((new Date()).toISOString(), df.namedNode('http://www.w3.org/2001/XMLSchema#dateTime'))),
-    ]);
-    for (let quad of quads) {
-        nWriter.addQuad(quad.subject, quad.predicate, quad.object, subject);
-    }
-    return new Promise((resolve, reject) => {
-        nWriter.end(async (error, result) => {
-            await writer.push(result);
-            resolve(undefined);
-        });
-    });
-}
-async function dumpToRdfStore(dump, dumpContentType) {
-    const store = RdfStore.createDefault();
-    if (Buffer.isBuffer(dump)) {
-        for (const quad of await arrayifyStream(rdfParser.parse(Readable.from(dump), { contentType: dumpContentType }))) {
-            store.addQuad(quad);
-        }
-    }
-    else if (dumpContentType === 'identifier') {
-        const { data } = await rdfDereferencer.dereference(dump, { localFiles: true });
-        await loadQuadStreamInStore(store, data);
-    }
-    else {
-        for (const quad of await arrayifyStream(rdfParser.parse(streamifyString(dump), { contentType: dumpContentType }))) {
-            store.addQuad(quad);
-        }
-    }
-    return store;
-}
-async function focusNodesToSubjects(store, focusNodesStrategy, focusNodes) {
-    switch (focusNodesStrategy) {
-        case 'extract':
-            return findFocusNodes(store);
-        case 'sparql':
-            return findFocusNodes(store, focusNodes);
-        case 'iris':
-            if (!focusNodes) {
-                logger.error(`[focusNodesToSubjects] focusNodesStrategy is set to '${focusNodesStrategy}' but no focusNodes were provided`);    
-                return streamifyArray([]);
-            }
-            return streamifyArray(focusNodes.split(',').map((iri) => df.namedNode(iri)));
-    }
-}
-async function findFocusNodes(store, query) {
-    query = query || `
-  PREFIX dcat: <http://www.w3.org/ns/dcat#>
-  PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-  PREFIX vcard: <http://www.w3.org/2006/vcard/ns#>
-  PREFIX dcterms: <http://purl.org/dc/terms/>
-
-  SELECT DISTINCT ?entity
-  WHERE {
-    ?entity a ?type .
-    FILTER (?type IN (dcat:Catalog, dcat:Dataset, dcat:Distribution, dcat:DataService, foaf:Agent, vcard:Kind, dcterms:LicenseDocument))        
-  }
-  `;
-    const bindingsStream = await engine.queryBindings(query, { sources: [store] });
-    return (bindingsStream.map((bindings) => bindings.get('entity')).filter((term) => term !== undefined));
-}
-export async function main(writer, feedname, flush, dump, dumpContentType, focusNodesStrategy, nodeShapeIri, nodeShape, focusNodes, dbDir = "./") {
-    const db = new Level(path.join(dbDir, "state-of-" + feedname), { valueEncoding: 'json' });
-    if (flush) {
-        logger.info(`Flushing the database for feed ${feedname}.`);
-        await db.clear();
-    }
-    const store = await dumpToRdfStore(dump, dumpContentType);
-    let nodeShapeStore;
-    if (nodeShape) {
-        nodeShapeStore = await dumpToRdfStore(nodeShape, 'text/turtle');
-    }
-    const extractor = new CBDShapeExtractor(nodeShapeStore);
-    const subjectsStream = await focusNodesToSubjects(store, focusNodesStrategy, focusNodes);
-    const nodeShapeIriTerm = df.namedNode(nodeShapeIri);
-    let processing = 0;
-    const subjectsQueue = new Queue();
-    let busy = false;
-    subjectsStream.on('data', async (subjectToQueue) => {
-        subjectsQueue.enqueue(subjectToQueue);
-        if (busy) {
-            return;
-        }
-        busy = true;
-        while (!subjectsQueue.isEmpty()) {
-            const subject = subjectsQueue.dequeue();
-            processing++;
-            if (subject.termType === 'BlankNode') {
-                logger.error("An entity (" + subject.value + ") cannot be a blank node!");
-                processing--;
-            }
-            else if (subject.termType === 'NamedNode') {
-                let entityQuads = await extractor.extract(store, subject, nodeShapeIriTerm);
-                let canonizedString = await canonize(entityQuads, { algorithm: 'RDFC-1.0' });
-                let hashString = createHash('md5').update(canonizedString).digest('hex');
-                try {
-                    let previousHashString = await db.get(subject.value);
-                    if (previousHashString !== hashString) {
-                        logger.debug(`Unequal hashes found in the db for '${subject.value}'. Processing an Update.`);
-                        await db.put(subject.value, hashString);
-                        await processActivity(writer, entityQuads, df.namedNode("https://www.w3.org/ns/activitystreams#Update"), subject, hashString);
-                    }
-                    else {
-                        logger.verbose(`Equal hashes found in the db for '${subject.value}'. Doing nothing.`);
-                    }
-                }
-                catch (e) {
-                    logger.debug(`No hash found in the db for '${subject.value}'. Processing a Create.`);
-                    await db.put(subject.value, hashString);
-                    await processActivity(writer, entityQuads, df.namedNode("https://www.w3.org/ns/activitystreams#Create"), subject, hashString);
-                }
-                finally {
-                    processing--;
-                }
-            }
-        }
-        busy = false;
-    });
-    await new Promise((resolve, reject) => {
-        subjectsStream.on('end', async () => {
-PS C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline>
+2026-04-14T00:53:30.142Z {sds-processors-ts} [ldesDiskWriter] debug: [metadata] Got input with 27 quads
+2026-04-14T00:53:33.539Z {dumps-to-feed-processor-ts} [processor] verbose: Waiting for processing to finish...
+2026-04-14T00:53:33.592Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/ECWAS'. Processing a Create.
+2026-04-14T00:53:33.596Z {sds-processors-ts} [sdsify] debug: Got input with 71 quads
+2026-04-14T00:53:33.598Z {sds-processors-ts} [sdsify] debug: Members extracted in 2 ms
+2026-04-14T00:53:33.611Z {sds-processors-ts} [TimebasedBucketizer] info: Creating new year bucket with timestamp 2026-01-01T00:00:00.000Z and timespan 31536000000.
+2026-04-14T00:53:33.612Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#2a0df3889e6484ca2f242889c7585637' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:33.620Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 93 quads
+2026-04-14T00:53:33.641Z {dumps-to-feed-processor-ts} [processor] verbose: Waiting for processing to finish...
+2026-04-14T00:53:33.650Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 53 ms
+2026-04-14T00:53:33.652Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/EUROCONTROL'. Processing a Create.
+2026-04-14T00:53:33.655Z {sds-processors-ts} [sdsify] debug: Got input with 74 quads
+2026-04-14T00:53:33.659Z {sds-processors-ts} [sdsify] debug: Members extracted in 3 ms
+2026-04-14T00:53:33.664Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#672496c22b2037b476e277ebf6e1fd18' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:33.666Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 80 quads
+2026-04-14T00:53:33.671Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 15 ms
+2026-04-14T00:53:33.673Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/NAFO'. Processing a Create.
+2026-04-14T00:53:33.676Z {sds-processors-ts} [sdsify] debug: Got input with 43 quads
+2026-04-14T00:53:33.679Z {sds-processors-ts} [sdsify] debug: Members extracted in 2 ms
+2026-04-14T00:53:33.681Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#f15e4719d86096e92ed7380c67111515' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:33.683Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 49 quads
+2026-04-14T00:53:33.688Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 11 ms
+2026-04-14T00:53:33.690Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/BEUC'. Processing a Create.
+2026-04-14T00:53:33.694Z {sds-processors-ts} [sdsify] debug: Got input with 63 quads
+2026-04-14T00:53:33.696Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:33.699Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#ae7fab1b81cc35dc8c898d8948e06840' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:33.701Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 69 quads
+2026-04-14T00:53:33.707Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 12 ms
+2026-04-14T00:53:33.717Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/EURUN'. Processing a Create.
+2026-04-14T00:53:33.724Z {sds-processors-ts} [sdsify] debug: Got input with 221 quads
+2026-04-14T00:53:33.728Z {sds-processors-ts} [sdsify] debug: Members extracted in 3 ms
+2026-04-14T00:53:33.742Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#14179a3d48523400008d1ce646f3121f' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:33.749Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 227 quads
+2026-04-14T00:53:33.751Z {dumps-to-feed-processor-ts} [processor] verbose: Waiting for processing to finish...
+2026-04-14T00:53:33.757Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 32 ms
+2026-04-14T00:53:33.760Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/COU_EUR'. Processing a Create.
+2026-04-14T00:53:33.764Z {sds-processors-ts} [sdsify] debug: Got input with 79 quads
+2026-04-14T00:53:33.766Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:33.771Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#7d99459af85aeb117490b8f2360526e1' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:33.773Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 85 quads
+2026-04-14T00:53:33.778Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 13 ms
+2026-04-14T00:53:33.781Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/CAP'. Processing a Create.
+2026-04-14T00:53:33.783Z {sds-processors-ts} [sdsify] debug: Got input with 64 quads
+2026-04-14T00:53:33.783Z {sds-processors-ts} [sdsify] debug: Members extracted in 0 ms
+2026-04-14T00:53:33.785Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#61bac976437fd39a05fdc01871f6c527' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:33.789Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 70 quads
+2026-04-14T00:53:33.795Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 12 ms
+2026-04-14T00:53:33.797Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/EFTA'. Processing a Create.
+2026-04-14T00:53:33.799Z {sds-processors-ts} [sdsify] debug: Got input with 53 quads
+2026-04-14T00:53:33.800Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:33.804Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#e99461e5cce01eba7337e90e6cfc28b4' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:33.807Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 59 quads
+2026-04-14T00:53:33.813Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 13 ms
+2026-04-14T00:53:33.818Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/GULF_COOP_COUN'. Processing a Create.
+2026-04-14T00:53:33.822Z {sds-processors-ts} [sdsify] debug: Got input with 79 quads
+2026-04-14T00:53:33.824Z {sds-processors-ts} [sdsify] debug: Members extracted in 2 ms
+2026-04-14T00:53:33.833Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#eb92278506030a52f5edd901a64b9c4e' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:33.844Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 85 quads
+2026-04-14T00:53:33.850Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 28 ms
+2026-04-14T00:53:33.854Z {dumps-to-feed-processor-ts} [processor] verbose: Waiting for processing to finish...
+2026-04-14T00:53:33.855Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/UNO'. Processing a Create.
+2026-04-14T00:53:33.861Z {sds-processors-ts} [sdsify] debug: Got input with 147 quads
+2026-04-14T00:53:33.865Z {sds-processors-ts} [sdsify] debug: Members extracted in 4 ms
+2026-04-14T00:53:33.873Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#04f0ec35751d942f2fe2bba2fe241a51' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:33.879Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 153 quads
+2026-04-14T00:53:33.883Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 22 ms
+2026-04-14T00:53:33.887Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/WTO'. Processing a Create.
+2026-04-14T00:53:33.890Z {sds-processors-ts} [sdsify] debug: Got input with 73 quads
+2026-04-14T00:53:33.897Z {sds-processors-ts} [sdsify] debug: Members extracted in 4 ms
+2026-04-14T00:53:33.902Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#f77e8ce487c476a06034708501c959c5' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:33.913Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 79 quads
+2026-04-14T00:53:33.918Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 25 ms
+2026-04-14T00:53:33.922Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/WHO'. Processing a Create.
+2026-04-14T00:53:33.932Z {sds-processors-ts} [sdsify] debug: Got input with 79 quads
+2026-04-14T00:53:33.934Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:33.947Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#e6c0cbd4294d16c77787a8d79066c92f' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:33.949Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 85 quads
+2026-04-14T00:53:33.957Z {dumps-to-feed-processor-ts} [processor] verbose: Waiting for processing to finish...
+2026-04-14T00:53:33.961Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 28 ms
+2026-04-14T00:53:33.964Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/PIF'. Processing a Create.
+2026-04-14T00:53:33.966Z {sds-processors-ts} [sdsify] debug: Got input with 50 quads
+2026-04-14T00:53:33.967Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:33.971Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#43a8cc5fdc9698b81a45a731a33418e9' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:33.973Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 56 quads
+2026-04-14T00:53:33.983Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 17 ms
+2026-04-14T00:53:33.985Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/NORDENCOU'. Processing a Create.
+2026-04-14T00:53:33.989Z {sds-processors-ts} [sdsify] debug: Got input with 55 quads
+2026-04-14T00:53:33.990Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:33.996Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#675c31277d5bbaf7e688a6684bbb5651' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:33.999Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 61 quads
+2026-04-14T00:53:34.002Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 13 ms
+2026-04-14T00:53:34.005Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/FID_1938_0'. Processing a Create.
+2026-04-14T00:53:34.008Z {sds-processors-ts} [sdsify] debug: Got input with 48 quads
+2026-04-14T00:53:34.010Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:34.020Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#8c576a14e25687fde4ff3ef6f00d34b6' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:34.023Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 54 quads
+2026-04-14T00:53:34.027Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 18 ms
+2026-04-14T00:53:34.034Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/EURSCHOOL'. Processing a Create.
+2026-04-14T00:53:34.037Z {sds-processors-ts} [sdsify] debug: Got input with 52 quads
+2026-04-14T00:53:34.038Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:34.043Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#0c0c096aeb51c45f9297df3d864b1a98' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:34.046Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 58 quads
+2026-04-14T00:53:34.050Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 12 ms
+2026-04-14T00:53:34.051Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/UPC'. Processing a Create.
+2026-04-14T00:53:34.055Z {sds-processors-ts} [sdsify] debug: Got input with 49 quads
+2026-04-14T00:53:34.057Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:34.062Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#dea92fe084821ac70b472a790e0ddf62' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:34.064Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 55 quads
+2026-04-14T00:53:34.065Z {dumps-to-feed-processor-ts} [processor] verbose: Waiting for processing to finish...
+2026-04-14T00:53:34.068Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 12 ms
+2026-04-14T00:53:34.072Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/OPCW'. Processing a Create.
+2026-04-14T00:53:34.076Z {sds-processors-ts} [sdsify] debug: Got input with 46 quads
+2026-04-14T00:53:34.079Z {sds-processors-ts} [sdsify] debug: Members extracted in 2 ms
+2026-04-14T00:53:34.081Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#cd67f73aa75398f69bf3cd7b11034631' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:34.083Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 52 quads
+2026-04-14T00:53:34.088Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 11 ms
+2026-04-14T00:53:34.090Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/ASEAN'. Processing a Create.
+2026-04-14T00:53:34.096Z {sds-processors-ts} [sdsify] debug: Got input with 72 quads
+2026-04-14T00:53:34.097Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:34.100Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#ad9ac95f500637de069398f48b822953' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:34.105Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 78 quads
+2026-04-14T00:53:34.114Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 18 ms
+2026-04-14T00:53:34.116Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/OAPEC'. Processing a Create.
+2026-04-14T00:53:34.118Z {sds-processors-ts} [sdsify] debug: Got input with 53 quads
+2026-04-14T00:53:34.119Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:34.122Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#1a625d861d277e127f1c7aa0b156e0ed' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:34.127Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 59 quads
+2026-04-14T00:53:34.133Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 15 ms
+2026-04-14T00:53:34.135Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/NAFTA'. Processing a Create.
+2026-04-14T00:53:34.137Z {sds-processors-ts} [sdsify] debug: Got input with 67 quads
+2026-04-14T00:53:34.139Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:34.145Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#f0394475866f39c83114b4ad25c241a9' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:34.147Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 73 quads
+2026-04-14T00:53:34.187Z {dumps-to-feed-processor-ts} [processor] verbose: Waiting for processing to finish...
+2026-04-14T00:53:34.193Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 55 ms
+2026-04-14T00:53:34.199Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/WB'. Processing a Create.
+2026-04-14T00:53:34.201Z {sds-processors-ts} [sdsify] debug: Got input with 51 quads
+2026-04-14T00:53:34.202Z {sds-processors-ts} [sdsify] debug: Members extracted in 0 ms
+2026-04-14T00:53:34.207Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#0070fe1fea9c1fc208b3c6e40829c355' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:34.211Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 57 quads
+2026-04-14T00:53:34.217Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 15 ms
+2026-04-14T00:53:34.220Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/APEC'. Processing a Create.
+2026-04-14T00:53:34.222Z {sds-processors-ts} [sdsify] debug: Got input with 51 quads
+2026-04-14T00:53:34.224Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:34.227Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#8d016a1c99d22876d67862fba09ff3d2' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:34.230Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 57 quads
+2026-04-14T00:53:34.235Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 12 ms
+2026-04-14T00:53:34.238Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/GROUP_RIO'. Processing a Create.
+2026-04-14T00:53:34.242Z {sds-processors-ts} [sdsify] debug: Got input with 44 quads
+2026-04-14T00:53:34.244Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:34.248Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#c230d42feabb576a3e18d38cdf4d1650' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:34.250Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 50 quads
+2026-04-14T00:53:34.258Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 15 ms
+2026-04-14T00:53:34.266Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/SEATO'. Processing a Create.
+2026-04-14T00:53:34.268Z {sds-processors-ts} [sdsify] debug: Got input with 62 quads
+2026-04-14T00:53:34.272Z {sds-processors-ts} [sdsify] debug: Members extracted in 2 ms
+2026-04-14T00:53:34.284Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#535155f5db6e0ffda2339b6a54659b2f' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:34.295Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 68 quads
+2026-04-14T00:53:34.297Z {dumps-to-feed-processor-ts} [processor] verbose: Waiting for processing to finish...
+2026-04-14T00:53:34.302Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 33 ms
+2026-04-14T00:53:34.312Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/IDB'. Processing a Create.
+2026-04-14T00:53:34.314Z {sds-processors-ts} [sdsify] debug: Got input with 63 quads
+2026-04-14T00:53:34.316Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:34.318Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#aa9ac1788cd8f694aa1994ad9550f7af' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:34.322Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 69 quads
+2026-04-14T00:53:34.330Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 15 ms
+2026-04-14T00:53:34.331Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/G7'. Processing a Create.
+2026-04-14T00:53:34.333Z {sds-processors-ts} [sdsify] debug: Got input with 48 quads
+2026-04-14T00:53:34.334Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:34.336Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#e367365820db0d28e03f711fefa6ab8d' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:34.341Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 54 quads
+2026-04-14T00:53:34.346Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 13 ms
+2026-04-14T00:53:34.348Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/CIS'. Processing a Create.
+2026-04-14T00:53:34.352Z {sds-processors-ts} [sdsify] debug: Got input with 58 quads
+2026-04-14T00:53:34.356Z {sds-processors-ts} [sdsify] debug: Members extracted in 4 ms
+2026-04-14T00:53:34.362Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#cdd8a20a3ee7f8fd0adca8797ed75f3a' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:34.365Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 64 quads
+2026-04-14T00:53:34.372Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 20 ms
+2026-04-14T00:53:34.376Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/CERN'. Processing a Create.
+2026-04-14T00:53:34.378Z {sds-processors-ts} [sdsify] debug: Got input with 73 quads
+2026-04-14T00:53:34.380Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:34.383Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#0285fca0cf7a2369caa4ce7933c2e187' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:34.390Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 79 quads
+2026-04-14T00:53:34.395Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 16 ms
+2026-04-14T00:53:34.396Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/ACJHR'. Processing a Create.
+2026-04-14T00:53:34.398Z {sds-processors-ts} [sdsify] debug: Got input with 42 quads
+2026-04-14T00:53:34.398Z {sds-processors-ts} [sdsify] debug: Members extracted in 0 ms
+2026-04-14T00:53:34.403Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#fb712eda1a821daece5ecae9cc477862' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:34.406Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 48 quads
+2026-04-14T00:53:34.409Z {dumps-to-feed-processor-ts} [processor] verbose: Waiting for processing to finish...
+2026-04-14T00:53:34.413Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 15 ms
+2026-04-14T00:53:34.415Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/EC'. Processing a Create.
+2026-04-14T00:53:34.417Z {sds-processors-ts} [sdsify] debug: Got input with 134 quads
+2026-04-14T00:53:34.418Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:34.428Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#3096920f383506356956ecdbbe8e7899' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:34.435Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 140 quads
+2026-04-14T00:53:34.447Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 30 ms
+2026-04-14T00:53:34.452Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/G10'. Processing a Create.
+2026-04-14T00:53:34.456Z {sds-processors-ts} [sdsify] debug: Got input with 42 quads
+2026-04-14T00:53:34.458Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:34.461Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#b5b247861cc2ec385afe4f8de5903386' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:34.462Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 48 quads
+2026-04-14T00:53:34.467Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 10 ms
+2026-04-14T00:53:34.469Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/ILAI'. Processing a Create.
+2026-04-14T00:53:34.473Z {sds-processors-ts} [sdsify] debug: Got input with 45 quads
+2026-04-14T00:53:34.475Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:34.479Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#e010eac507f9b6a4172eedbbbf1ee0f5' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:34.482Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 51 quads
+2026-04-14T00:53:34.494Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 20 ms
+2026-04-14T00:53:34.496Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/EUROCORPS'. Processing a Create.
+2026-04-14T00:53:34.498Z {sds-processors-ts} [sdsify] debug: Got input with 59 quads
+2026-04-14T00:53:34.500Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:34.504Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#a9850b7c4b5767f0584f02f209bed554' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:34.510Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 65 quads
+2026-04-14T00:53:34.512Z {dumps-to-feed-processor-ts} [processor] verbose: Waiting for processing to finish...
+2026-04-14T00:53:34.517Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 18 ms
+2026-04-14T00:53:34.519Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/UNASUR'. Processing a Create.
+2026-04-14T00:53:34.526Z {sds-processors-ts} [sdsify] debug: Got input with 48 quads
+2026-04-14T00:53:34.529Z {sds-processors-ts} [sdsify] debug: Members extracted in 2 ms
+2026-04-14T00:53:34.534Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#391f87f7138092f51ef5db478a3ff114' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:34.537Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 54 quads
+2026-04-14T00:53:34.544Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 17 ms
+2026-04-14T00:53:34.546Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/LAIA'. Processing a Create.
+2026-04-14T00:53:34.548Z {sds-processors-ts} [sdsify] debug: Got input with 55 quads
+2026-04-14T00:53:34.549Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:34.558Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#6651e6696133e73c9b4b6452aa5b6ecf' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:34.562Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 61 quads
+2026-04-14T00:53:34.567Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 19 ms
+2026-04-14T00:53:34.573Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/EAEC'. Processing a Create.
+2026-04-14T00:53:34.577Z {sds-processors-ts} [sdsify] debug: Got input with 81 quads
+2026-04-14T00:53:34.579Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:34.583Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#d671d5cd68bf63947b740353932ee28a' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:34.585Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 87 quads
+2026-04-14T00:53:34.597Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 19 ms
+2026-04-14T00:53:34.598Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/CCNR'. Processing a Create.
+2026-04-14T00:53:34.600Z {sds-processors-ts} [sdsify] debug: Got input with 41 quads
+2026-04-14T00:53:34.602Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:34.606Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#f99dcd69baecffda8236816b60e4a1b9' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:34.608Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 47 quads
+2026-04-14T00:53:34.612Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 11 ms
+2026-04-14T00:53:34.614Z {dumps-to-feed-processor-ts} [processor] verbose: Waiting for processing to finish...
+2026-04-14T00:53:34.615Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/CEFTA'. Processing a Create.
+2026-04-14T00:53:34.616Z {sds-processors-ts} [sdsify] debug: Got input with 67 quads
+2026-04-14T00:53:34.617Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:34.619Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#720b666344b5b2a8e079b94c058f2f5c' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:34.622Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 73 quads
+2026-04-14T00:53:34.629Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 12 ms
+2026-04-14T00:53:34.630Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/GROUP_CNTDR'. Processing a Create.
+2026-04-14T00:53:34.631Z {sds-processors-ts} [sdsify] debug: Got input with 54 quads
+2026-04-14T00:53:34.632Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:34.634Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#cd3c9e41b92f35fb54372e6ea922ccc3' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:34.639Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 60 quads
+2026-04-14T00:53:34.646Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 15 ms
+2026-04-14T00:53:34.648Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/WADA'. Processing a Create.
+2026-04-14T00:53:34.663Z {sds-processors-ts} [sdsify] debug: Got input with 46 quads
+2026-04-14T00:53:34.668Z {sds-processors-ts} [sdsify] debug: Members extracted in 2 ms
+2026-04-14T00:53:34.675Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#2308f3c269f99bec6001a501d0e6b5cb' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:34.677Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 52 quads
+2026-04-14T00:53:34.680Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 15 ms
+2026-04-14T00:53:34.684Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/AMU'. Processing a Create.
+2026-04-14T00:53:34.686Z {sds-processors-ts} [sdsify] debug: Got input with 60 quads
+2026-04-14T00:53:34.690Z {sds-processors-ts} [sdsify] debug: Members extracted in 2 ms
+2026-04-14T00:53:34.694Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#ff5883dc44653a42c7ec9a58440c1036' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:34.695Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 66 quads
+2026-04-14T00:53:34.700Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 12 ms
+2026-04-14T00:53:34.702Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/EBU'. Processing a Create.
+2026-04-14T00:53:34.706Z {sds-processors-ts} [sdsify] debug: Got input with 49 quads
+2026-04-14T00:53:34.709Z {sds-processors-ts} [sdsify] debug: Members extracted in 2 ms
+2026-04-14T00:53:34.712Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#8e817c358b4e736d7003f3f124fcd0cc' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:34.714Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 55 quads
+2026-04-14T00:53:34.715Z {dumps-to-feed-processor-ts} [processor] verbose: Waiting for processing to finish...
+2026-04-14T00:53:34.718Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 11 ms
+2026-04-14T00:53:34.721Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/ACS'. Processing a Create.
+2026-04-14T00:53:34.724Z {sds-processors-ts} [sdsify] debug: Got input with 54 quads
+2026-04-14T00:53:34.725Z {sds-processors-ts} [sdsify] debug: Members extracted in 0 ms
+2026-04-14T00:53:34.728Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#2f0978ad2739500fadcaf61d91c36213' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:34.730Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 60 quads
+2026-04-14T00:53:34.734Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 8 ms
+2026-04-14T00:53:34.735Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/EAES'. Processing a Create.
+2026-04-14T00:53:34.738Z {sds-processors-ts} [sdsify] debug: Got input with 53 quads
+2026-04-14T00:53:34.740Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:34.743Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#dc8ec3a1d24bcee7345f8b9557ca5aaa' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:34.745Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 59 quads
+2026-04-14T00:53:34.749Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 10 ms
+2026-04-14T00:53:34.752Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/IRENA'. Processing a Create.
+2026-04-14T00:53:34.757Z {sds-processors-ts} [sdsify] debug: Got input with 42 quads
+2026-04-14T00:53:34.759Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:34.763Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#ae352fc2c98cb2646c3208ac5993ce8a' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:34.765Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 48 quads
+2026-04-14T00:53:34.772Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 14 ms
+2026-04-14T00:53:34.773Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/BLEU'. Processing a Create.
+2026-04-14T00:53:34.775Z {sds-processors-ts} [sdsify] debug: Got input with 64 quads
+2026-04-14T00:53:34.777Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:34.782Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#640b420a00920b4e5d19ed44435c94be' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:34.788Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 70 quads
+2026-04-14T00:53:34.795Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 19 ms
+2026-04-14T00:53:34.796Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/IAEA'. Processing a Create.
+2026-04-14T00:53:34.806Z {sds-processors-ts} [sdsify] debug: Got input with 77 quads
+2026-04-14T00:53:34.808Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:34.814Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#3130b5c4efd798b5dfb0dba6b45c1379' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:34.816Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 83 quads
+2026-04-14T00:53:34.819Z {dumps-to-feed-processor-ts} [processor] verbose: Waiting for processing to finish...
+2026-04-14T00:53:34.826Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 19 ms
+2026-04-14T00:53:34.829Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/CBSS'. Processing a Create.
+2026-04-14T00:53:34.830Z {sds-processors-ts} [sdsify] debug: Got input with 64 quads
+2026-04-14T00:53:34.831Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:34.833Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#8dd97b8ef61e90396240c5019e6d0b1b' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:34.834Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 70 quads
+2026-04-14T00:53:34.839Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 9 ms
+2026-04-14T00:53:34.841Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/IDA'. Processing a Create.
+2026-04-14T00:53:34.845Z {sds-processors-ts} [sdsify] debug: Got input with 65 quads
+2026-04-14T00:53:34.846Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:34.849Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#1b216dfa0b502b889287b72024d63bf9' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:34.850Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 71 quads
+2026-04-14T00:53:34.853Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 8 ms
+2026-04-14T00:53:34.857Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/ECHR'. Processing a Create.
+2026-04-14T00:53:34.859Z {sds-processors-ts} [sdsify] debug: Got input with 60 quads
+2026-04-14T00:53:34.861Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:34.864Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#73c4d5a4d70aef42d66006e78fd6e2a8' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:34.866Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 66 quads
+2026-04-14T00:53:34.873Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 12 ms
+2026-04-14T00:53:34.875Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/CENELEC'. Processing a Create.
+2026-04-14T00:53:34.879Z {sds-processors-ts} [sdsify] debug: Got input with 67 quads
+2026-04-14T00:53:34.880Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:34.886Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#feabcf2d74b19104774932ed96b28394' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:34.890Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 73 quads
+2026-04-14T00:53:34.896Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 16 ms
+2026-04-14T00:53:34.897Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/ACP-EU_JPA'. Processing a Create.
+2026-04-14T00:53:34.901Z {sds-processors-ts} [sdsify] debug: Got input with 42 quads
+2026-04-14T00:53:34.902Z {sds-processors-ts} [sdsify] debug: Members extracted in 0 ms
+2026-04-14T00:53:34.906Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#850d23687ce5f93a9368ab938a21d289' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:34.909Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 48 quads
+2026-04-14T00:53:34.914Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 12 ms
+2026-04-14T00:53:34.919Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/IATA'. Processing a Create.
+2026-04-14T00:53:34.922Z {sds-processors-ts} [sdsify] debug: Got input with 74 quads
+2026-04-14T00:53:34.923Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:34.928Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#028432a575aba329cbb94ca19ddf1880' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:34.931Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 80 quads
+2026-04-14T00:53:34.935Z {dumps-to-feed-processor-ts} [processor] verbose: Waiting for processing to finish...
+2026-04-14T00:53:34.941Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 19 ms
+2026-04-14T00:53:34.944Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/CARICOM'. Processing a Create.
+2026-04-14T00:53:34.946Z {sds-processors-ts} [sdsify] debug: Got input with 88 quads
+2026-04-14T00:53:34.948Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:34.952Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#160a53bcc154d2494c81c0e8df8a9c1a' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:34.954Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 94 quads
+2026-04-14T00:53:34.960Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 13 ms
+2026-04-14T00:53:34.963Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/UNION_AFR'. Processing a Create.
+2026-04-14T00:53:34.965Z {sds-processors-ts} [sdsify] debug: Got input with 72 quads
+2026-04-14T00:53:34.966Z {sds-processors-ts} [sdsify] debug: Members extracted in 0 ms
+2026-04-14T00:53:34.974Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#95405844831324eae58658260350652c' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:34.976Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 78 quads
+2026-04-14T00:53:34.980Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 14 ms
+2026-04-14T00:53:34.983Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/WCO'. Processing a Create.
+2026-04-14T00:53:34.985Z {sds-processors-ts} [sdsify] debug: Got input with 51 quads
+2026-04-14T00:53:34.986Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:34.990Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#26bcfa2ff45683fd146f1502947a1929' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:34.993Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 57 quads
+2026-04-14T00:53:34.997Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 12 ms
+2026-04-14T00:53:34.998Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/EVS'. Processing a Create.
+2026-04-14T00:53:35.000Z {sds-processors-ts} [sdsify] debug: Got input with 56 quads
+2026-04-14T00:53:35.001Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:35.002Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#143b709bccc8214afb20b097248586b9' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:35.005Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 62 quads
+2026-04-14T00:53:35.017Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 17 ms
+2026-04-14T00:53:35.018Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/ACM'. Processing a Create.
+2026-04-14T00:53:35.019Z {sds-processors-ts} [sdsify] debug: Got input with 47 quads
+2026-04-14T00:53:35.022Z {sds-processors-ts} [sdsify] debug: Members extracted in 2 ms
+2026-04-14T00:53:35.028Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#abcbe7d8d0c18dc874df173b8e709ce0' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:35.029Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 53 quads
+2026-04-14T00:53:35.032Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 12 ms
+2026-04-14T00:53:35.034Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/APO'. Processing a Create.
+2026-04-14T00:53:35.035Z {sds-processors-ts} [sdsify] debug: Got input with 48 quads
+2026-04-14T00:53:35.036Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:35.039Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#ab698796dc6d0decc228b12fcd85e4e3' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:35.043Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 54 quads
+2026-04-14T00:53:35.044Z {dumps-to-feed-processor-ts} [processor] verbose: Waiting for processing to finish...
+2026-04-14T00:53:35.046Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 11 ms
+2026-04-14T00:53:35.048Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/CEPT'. Processing a Create.
+2026-04-14T00:53:35.049Z {sds-processors-ts} [sdsify] debug: Got input with 74 quads
+2026-04-14T00:53:35.051Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:35.053Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#4e21c291d5f3b50e57616da4fc09ffca' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:35.057Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 80 quads
+2026-04-14T00:53:35.062Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 12 ms
+2026-04-14T00:53:35.063Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/ITUC'. Processing a Create.
+2026-04-14T00:53:35.065Z {sds-processors-ts} [sdsify] debug: Got input with 63 quads
+2026-04-14T00:53:35.066Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:35.068Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#38303491f03eb15565d70da15fe53912' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:35.069Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 69 quads
+2026-04-14T00:53:35.077Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 12 ms
+2026-04-14T00:53:35.079Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/OPEC'. Processing a Create.
+2026-04-14T00:53:35.080Z {sds-processors-ts} [sdsify] debug: Got input with 73 quads
+2026-04-14T00:53:35.081Z {sds-processors-ts} [sdsify] debug: Members extracted in 0 ms
+2026-04-14T00:53:35.083Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#1f812195049722987ac35173e63549e0' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:35.084Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 79 quads
+2026-04-14T00:53:35.089Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 8 ms
+2026-04-14T00:53:35.092Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/ENP-SOUTH'. Processing a Create.
+2026-04-14T00:53:35.094Z {sds-processors-ts} [sdsify] debug: Got input with 42 quads
+2026-04-14T00:53:35.095Z {sds-processors-ts} [sdsify] debug: Members extracted in 0 ms
+2026-04-14T00:53:35.098Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#fc3b6fad271ed3090fe8db33815cbee4' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:35.099Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 48 quads
+2026-04-14T00:53:35.102Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 7 ms
+2026-04-14T00:53:35.104Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/WTORG'. Processing a Create.
+2026-04-14T00:53:35.108Z {sds-processors-ts} [sdsify] debug: Got input with 73 quads
+2026-04-14T00:53:35.109Z {sds-processors-ts} [sdsify] debug: Members extracted in 0 ms
+2026-04-14T00:53:35.113Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#9fdd1d9bda1bd95a5cc16a99e3286ef5' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:35.114Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 79 quads
+2026-04-14T00:53:35.117Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 8 ms
+2026-04-14T00:53:35.120Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/PLO'. Processing a Create.
+2026-04-14T00:53:35.124Z {sds-processors-ts} [sdsify] debug: Got input with 68 quads
+2026-04-14T00:53:35.126Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:35.129Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#7ce0b934bb5b18975268133b246f8988' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:35.131Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 74 quads
+2026-04-14T00:53:35.134Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 9 ms
+2026-04-14T00:53:35.135Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/CEEP'. Processing a Create.
+2026-04-14T00:53:35.139Z {sds-processors-ts} [sdsify] debug: Got input with 63 quads
+2026-04-14T00:53:35.141Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:35.146Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#4e3bf11b6f5301a2bdf2afaf0b07229f' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:35.147Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 69 quads
+2026-04-14T00:53:35.148Z {dumps-to-feed-processor-ts} [processor] verbose: Waiting for processing to finish...
+2026-04-14T00:53:35.150Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 10 ms
+2026-04-14T00:53:35.151Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/SADC'. Processing a Create.
+2026-04-14T00:53:35.153Z {sds-processors-ts} [sdsify] debug: Got input with 68 quads
+2026-04-14T00:53:35.155Z {sds-processors-ts} [sdsify] debug: Members extracted in 2 ms
+2026-04-14T00:53:35.159Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#6d97948674bff0570d1c677579213179' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:35.161Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 74 quads
+2026-04-14T00:53:35.164Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 11 ms
+2026-04-14T00:53:35.165Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/ACP_AMB'. Processing a Create.
+2026-04-14T00:53:35.167Z {sds-processors-ts} [sdsify] debug: Got input with 47 quads
+2026-04-14T00:53:35.168Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:35.173Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#b50a479115fe0707ec271cf4636164d0' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:35.176Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 53 quads
+2026-04-14T00:53:35.180Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 13 ms
+2026-04-14T00:53:35.181Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/NATO_EURGR'. Processing a Create.
+2026-04-14T00:53:35.183Z {sds-processors-ts} [sdsify] debug: Got input with 43 quads
+2026-04-14T00:53:35.184Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:35.185Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#945c72204f76286e2977973259b79afa' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:35.188Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 49 quads
+2026-04-14T00:53:35.194Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 11 ms
+2026-04-14T00:53:35.195Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/ESM'. Processing a Create.
+2026-04-14T00:53:35.197Z {sds-processors-ts} [sdsify] debug: Got input with 50 quads
+2026-04-14T00:53:35.198Z {sds-processors-ts} [sdsify] debug: Members extracted in 0 ms
+2026-04-14T00:53:35.199Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#ff22686888f4556bde4a338892f40e4a' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:35.200Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 56 quads
+2026-04-14T00:53:35.206Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 9 ms
+2026-04-14T00:53:35.208Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/IACHR'. Processing a Create.
+2026-04-14T00:53:35.210Z {sds-processors-ts} [sdsify] debug: Got input with 43 quads
+2026-04-14T00:53:35.211Z {sds-processors-ts} [sdsify] debug: Members extracted in 0 ms
+2026-04-14T00:53:35.213Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#52c999688fd716de5948c6cc2268c9b1' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:35.215Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 49 quads
+2026-04-14T00:53:35.220Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 9 ms
+2026-04-14T00:53:35.223Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/EEAREA'. Processing a Create.
+2026-04-14T00:53:35.226Z {sds-processors-ts} [sdsify] debug: Got input with 46 quads
+2026-04-14T00:53:35.227Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:35.230Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#c2b49bfcb361faa0e0f64eda259b4b5f' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:35.232Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 52 quads
+2026-04-14T00:53:35.236Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 10 ms
+2026-04-14T00:53:35.242Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/ECCAS'. Processing a Create.
+2026-04-14T00:53:35.244Z {sds-processors-ts} [sdsify] debug: Got input with 61 quads
+2026-04-14T00:53:35.246Z {sds-processors-ts} [sdsify] debug: Members extracted in 2 ms
+2026-04-14T00:53:35.285Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#8c4301798be51b344926e7ebdfa1f2ec' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:35.326Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 67 quads
+2026-04-14T00:53:35.377Z {dumps-to-feed-processor-ts} [processor] verbose: Waiting for processing to finish...
+2026-04-14T00:53:35.410Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 166 ms
+2026-04-14T00:53:35.413Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/FTAA'. Processing a Create.
+2026-04-14T00:53:35.415Z {sds-processors-ts} [sdsify] debug: Got input with 51 quads
+2026-04-14T00:53:35.416Z {sds-processors-ts} [sdsify] debug: Members extracted in 0 ms
+2026-04-14T00:53:35.419Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#8635889a6e0c88ddac3a811d124f35d0' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:35.421Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 57 quads
+2026-04-14T00:53:35.425Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 9 ms
+2026-04-14T00:53:35.452Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/BRICS'. Processing a Create.
+2026-04-14T00:53:35.456Z {sds-processors-ts} [sdsify] debug: Got input with 94 quads
+2026-04-14T00:53:35.457Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:35.464Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#e588dabfbb02cfdb4e2af24a3558592f' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:35.466Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 100 quads
+2026-04-14T00:53:35.470Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 14 ms
+2026-04-14T00:53:35.473Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/G20'. Processing a Create.
+2026-04-14T00:53:35.475Z {sds-processors-ts} [sdsify] debug: Got input with 42 quads
+2026-04-14T00:53:35.476Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:35.479Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#e3f24056b91ec2cb69e88ac947292118' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:35.482Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 48 quads
+2026-04-14T00:53:35.486Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 11 ms
+2026-04-14T00:53:35.488Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/CAIS'. Processing a Create.
+2026-04-14T00:53:35.490Z {sds-processors-ts} [sdsify] debug: Got input with 62 quads
+2026-04-14T00:53:35.492Z {sds-processors-ts} [sdsify] debug: Members extracted in 2 ms
+2026-04-14T00:53:35.498Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#9ec572d859d4e70b0c28bfb72e167fc3' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:35.500Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 68 quads
+2026-04-14T00:53:35.502Z {dumps-to-feed-processor-ts} [processor] verbose: Waiting for processing to finish...
+2026-04-14T00:53:35.506Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 16 ms
+2026-04-14T00:53:35.508Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/EBUNION'. Processing a Create.
+2026-04-14T00:53:35.509Z {sds-processors-ts} [sdsify] debug: Got input with 46 quads
+2026-04-14T00:53:35.511Z {sds-processors-ts} [sdsify] debug: Members extracted in 0 ms
+2026-04-14T00:53:35.513Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#021479498a2b2de2fb98a235bdc47eb0' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:35.514Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 52 quads
+2026-04-14T00:53:35.521Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 11 ms
+2026-04-14T00:53:35.523Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/APPU'. Processing a Create.
+2026-04-14T00:53:35.524Z {sds-processors-ts} [sdsify] debug: Got input with 44 quads
+2026-04-14T00:53:35.525Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:35.527Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#5b45d082e5164531146e645a47cbf059' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:35.528Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 50 quads
+2026-04-14T00:53:35.533Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 9 ms
+2026-04-14T00:53:35.539Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/CSSS'. Processing a Create.
+2026-04-14T00:53:35.541Z {sds-processors-ts} [sdsify] debug: Got input with 51 quads
+2026-04-14T00:53:35.543Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:35.545Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#0eab1f79fb451c31d1921542eedd6340' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:35.548Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 57 quads
+2026-04-14T00:53:35.553Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 12 ms
+2026-04-14T00:53:35.555Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/PLAN_CMB'. Processing a Create.
+2026-04-14T00:53:35.562Z {sds-processors-ts} [sdsify] debug: Got input with 43 quads
+2026-04-14T00:53:35.563Z {sds-processors-ts} [sdsify] debug: Members extracted in 0 ms
+2026-04-14T00:53:35.566Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#4c6ab584d0dff22133728a42e5e7d070' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:35.567Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 49 quads
+2026-04-14T00:53:35.574Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 11 ms
+2026-04-14T00:53:35.575Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/LAES'. Processing a Create.
+2026-04-14T00:53:35.578Z {sds-processors-ts} [sdsify] debug: Got input with 52 quads
+2026-04-14T00:53:35.579Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:35.581Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#5ea718bbcf5028ef10ad4dd78a6fd28c' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:35.584Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 58 quads
+2026-04-14T00:53:35.589Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 11 ms
+2026-04-14T00:53:35.591Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/OAS'. Processing a Create.
+2026-04-14T00:53:35.592Z {sds-processors-ts} [sdsify] debug: Got input with 70 quads
+2026-04-14T00:53:35.594Z {sds-processors-ts} [sdsify] debug: Members extracted in 2 ms
+2026-04-14T00:53:35.596Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#e5eb74c3fddfde31c0d2813235bb1e1a' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:35.598Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 76 quads
+2026-04-14T00:53:35.602Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 10 ms
+2026-04-14T00:53:35.604Z {dumps-to-feed-processor-ts} [processor] verbose: Waiting for processing to finish...
+2026-04-14T00:53:35.606Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/MERCOSUR'. Processing a Create.
+2026-04-14T00:53:35.609Z {sds-processors-ts} [sdsify] debug: Got input with 49 quads
+2026-04-14T00:53:35.611Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:35.613Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#e7617086e073ccc33adeaa71f6185958' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:35.614Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 55 quads
+2026-04-14T00:53:35.618Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 8 ms
+2026-04-14T00:53:35.619Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/ANDEAN'. Processing a Create.
+2026-04-14T00:53:35.623Z {sds-processors-ts} [sdsify] debug: Got input with 62 quads
+2026-04-14T00:53:35.624Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:35.628Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#11115c5e97c2a10f604b9f66a981c3a8' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:35.634Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 68 quads
+2026-04-14T00:53:35.640Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 17 ms
+2026-04-14T00:53:35.641Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/CMNW'. Processing a Create.
+2026-04-14T00:53:35.643Z {sds-processors-ts} [sdsify] debug: Got input with 46 quads
+2026-04-14T00:53:35.645Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:35.648Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#1c78e655068b154a6563d438e36ce185' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:35.650Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 52 quads
+2026-04-14T00:53:35.658Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 14 ms
+2026-04-14T00:53:35.659Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/CDB'. Processing a Create.
+2026-04-14T00:53:35.661Z {sds-processors-ts} [sdsify] debug: Got input with 64 quads
+2026-04-14T00:53:35.662Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:35.665Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#9444adf47a664194a1a451b16b6d8335' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:35.667Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 70 quads
+2026-04-14T00:53:35.674Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 13 ms
+2026-04-14T00:53:35.677Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/CABEI'. Processing a Create.
+2026-04-14T00:53:35.679Z {sds-processors-ts} [sdsify] debug: Got input with 56 quads
+2026-04-14T00:53:35.680Z {sds-processors-ts} [sdsify] debug: Members extracted in 0 ms
+2026-04-14T00:53:35.683Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#3be7d9e1a5713be213ad8f516a9153dd' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:35.685Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 62 quads
+2026-04-14T00:53:35.690Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 10 ms
+2026-04-14T00:53:35.693Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/ETUI'. Processing a Create.
+2026-04-14T00:53:35.694Z {sds-processors-ts} [sdsify] debug: Got input with 56 quads
+2026-04-14T00:53:35.695Z {sds-processors-ts} [sdsify] debug: Members extracted in 0 ms
+2026-04-14T00:53:35.698Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#4a1a399ec7ecda12a9eebc4460b240dd' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:35.699Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 62 quads
+2026-04-14T00:53:35.706Z {dumps-to-feed-processor-ts} [processor] verbose: Waiting for processing to finish...
+2026-04-14T00:53:35.707Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 12 ms
+2026-04-14T00:53:35.709Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/EUTELSAT'. Processing a Create.
+2026-04-14T00:53:35.710Z {sds-processors-ts} [sdsify] debug: Got input with 67 quads
+2026-04-14T00:53:35.711Z {sds-processors-ts} [sdsify] debug: Members extracted in 0 ms
+2026-04-14T00:53:35.715Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#aee60c85e50929876d274390867b741d' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:35.719Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 73 quads
+2026-04-14T00:53:35.742Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 31 ms
+2026-04-14T00:53:35.744Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/CACM'. Processing a Create.
+2026-04-14T00:53:35.746Z {sds-processors-ts} [sdsify] debug: Got input with 62 quads
+2026-04-14T00:53:35.747Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:35.750Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#9924dbbde36774c32570e2f56e7d832a' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:35.752Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 68 quads
+2026-04-14T00:53:35.756Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 10 ms
+2026-04-14T00:53:35.757Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/LEAGUE_ARAB'. Processing a Create.
+2026-04-14T00:53:35.763Z {sds-processors-ts} [sdsify] debug: Got input with 77 quads
+2026-04-14T00:53:35.765Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:35.767Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#488b15158280f8417859688d342ef4d6' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:35.769Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 83 quads
+2026-04-14T00:53:35.774Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 10 ms
+2026-04-14T00:53:35.775Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/ICC'. Processing a Create.
+2026-04-14T00:53:35.778Z {sds-processors-ts} [sdsify] debug: Got input with 47 quads
+2026-04-14T00:53:35.778Z {sds-processors-ts} [sdsify] debug: Members extracted in 0 ms
+2026-04-14T00:53:35.781Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#38bf3c09e685a8bc4ea99e5840dbc333' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:35.784Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 53 quads
+2026-04-14T00:53:35.790Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 12 ms
+2026-04-14T00:53:35.793Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/BENELUX'. Processing a Create.
+2026-04-14T00:53:35.795Z {sds-processors-ts} [sdsify] debug: Got input with 68 quads
+2026-04-14T00:53:35.796Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:35.800Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#25931f02d005d3c0304504495891f3d2' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:35.802Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 74 quads
+2026-04-14T00:53:35.816Z {dumps-to-feed-processor-ts} [processor] verbose: Waiting for processing to finish...
+2026-04-14T00:53:35.818Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 23 ms
+2026-04-14T00:53:35.820Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/IACA'. Processing a Create.
+2026-04-14T00:53:35.822Z {sds-processors-ts} [sdsify] debug: Got input with 42 quads
+2026-04-14T00:53:35.824Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:35.827Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#aee8be412cb5947ec868d765ed78eb8d' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:35.828Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 48 quads
+2026-04-14T00:53:35.831Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 8 ms
+2026-04-14T00:53:35.832Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/CAEMC'. Processing a Create.
+2026-04-14T00:53:35.835Z {sds-processors-ts} [sdsify] debug: Got input with 61 quads
+2026-04-14T00:53:35.839Z {sds-processors-ts} [sdsify] debug: Members extracted in 2 ms
+2026-04-14T00:53:35.842Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#67cbac542cc36187611eec5da041d601' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:35.844Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 67 quads
+2026-04-14T00:53:35.847Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 10 ms
+2026-04-14T00:53:35.848Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/ECSC'. Processing a Create.
+2026-04-14T00:53:35.850Z {sds-processors-ts} [sdsify] debug: Got input with 90 quads
+2026-04-14T00:53:35.851Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:35.857Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#820c373c783aac6d66fe50150952bc52' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:35.860Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 96 quads
+2026-04-14T00:53:35.863Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 13 ms
+2026-04-14T00:53:35.864Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/IEA'. Processing a Create.
+2026-04-14T00:53:35.866Z {sds-processors-ts} [sdsify] debug: Got input with 49 quads
+2026-04-14T00:53:35.867Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:35.869Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#b7d21d2e95984a52f01ba9fabdc49aab' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:35.873Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 55 quads
+2026-04-14T00:53:35.877Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 11 ms
+2026-04-14T00:53:35.878Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/ECMT'. Processing a Create.
+2026-04-14T00:53:35.880Z {sds-processors-ts} [sdsify] debug: Got input with 57 quads
+2026-04-14T00:53:35.881Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:35.883Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#133baa2b053cea0d0ed49f5a05b6ad12' to bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:35.884Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 63 quads
+2026-04-14T00:53:35.889Z {sds-processors-ts} [sdsify] debug: Successfully pushed 1 members in 9 ms
+2026-04-14T00:53:35.892Z {dumps-to-feed-processor-ts} [processor] debug: No hash found in the db for 'http://publications.europa.eu/resource/authority/corporate-body/OSCE'. Processing a Create.
+2026-04-14T00:53:35.895Z {sds-processors-ts} [sdsify] debug: Got input with 75 quads
+2026-04-14T00:53:35.896Z {sds-processors-ts} [sdsify] debug: Members extracted in 1 ms
+2026-04-14T00:53:35.898Z {sds-processors-ts} [TimebasedBucketizer] debug: We need to split the bucket 'root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/'.
+2026-04-14T00:53:35.899Z {sds-processors-ts} [TimebasedBucketizer] debug: Creating new bucket 'root/2026-01-01T00%3A00%3A00.000Z_7884000000_0/' 
+with timespan 7884000000.
+2026-04-14T00:53:35.900Z {sds-processors-ts} [TimebasedBucketizer] debug: Making bucket 'root/2026-01-01T00%3A00%3A00.000Z_7884000000_0/' immutable.
+2026-04-14T00:53:35.900Z {sds-processors-ts} [TimebasedBucketizer] debug: Creating new bucket 'root/2026-04-02T06%3A00%3A00.000Z_7884000000_0/' 
+with timespan 7884000000.
+2026-04-14T00:53:35.901Z {sds-processors-ts} [TimebasedBucketizer] debug: Creating new bucket 'root/2026-07-02T12%3A00%3A00.000Z_7884000000_0/' 
+with timespan 7884000000.
+2026-04-14T00:53:35.902Z {sds-processors-ts} [TimebasedBucketizer] debug: Creating new bucket 'root/2026-10-01T18%3A00%3A00.000Z_7884000000_0/' 
+with timespan 7884000000.
+2026-04-14T00:53:35.902Z {sds-processors-ts} [TimebasedBucketizer] debug: We need to make a new page. Bucket 'root/2026-04-02T06%3A00%3A00.000Z_7884000000_0/' is full.
+2026-04-14T00:53:35.903Z {sds-processors-ts} [TimebasedBucketizer] debug: Added record '#50b990052277e43b6ac75e791abaeb62' to bucket 'root/2026-04-02T06%3A00%3A00.000Z_7884000000_1/'.
+2026-04-14T00:53:35.911Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Got input with 551 quads
+2026-04-14T00:53:35.916Z {dumps-to-feed-processor-ts} [processor] verbose: Waiting for processing to finish...
+2026-04-14T00:53:35.917Z {sds-processors-ts} [ldesDiskWriter] debug: [data] Emptying bucket root/2026-01-01T00%3A00%3A00.000Z_31536000000_0/
+2026-04-14T00:53:35.923Z {sds-processors-ts} [ExitHandler] debug: [handleExit] Callback called on 'unhandledRejection' with code '99'.
+2026-04-14T00:53:35.924Z {sds-processors-ts} [ExitHandler] error: [handleExit] Uncaught Exception: Error - Unexpected "<..\\..\\..\\index.trig>" on line 1.
+2026-04-14T00:53:35.927Z {sds-processors-ts} [ExitHandler] debug: Error: Unexpected "<..\\..\\..\\index.trig>" on line 1.
+    at N3Lexer._syntaxError (C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline\node_modules\n3\lib\N3Lexer.js:452:17)
+    at reportSyntaxError (C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline\node_modules\n3\lib\N3Lexer.js:385:21)
+    at N3Lexer._tokenizeToEnd (C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline\node_modules\n3\lib\N3Lexer.js:355:86)
+    at N3Lexer.tokenize (C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline\node_modules\n3\lib\N3Lexer.js:482:14)
+    at N3Parser.parse (C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline\node_modules\n3\lib\N3Parser.js:979:19)
+    at file:///C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/node_modules/@rdfc/sds-processors-ts/lib/ldesDiskWriter.js:89:20    
+    at async Promise.all (index 0)
+    at async SimpleStream.push (file:///C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/node_modules/@rdfc/js-runner/dist/connectors.js:129:9)
+    at async file:///C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/node_modules/@rdfc/sds-processors-ts/lib/bucketizers.js:165:9 
+    at async Promise.all (index 0)

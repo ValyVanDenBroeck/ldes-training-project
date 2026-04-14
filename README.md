@@ -106,10 +106,11 @@ _________
 | `metadata.ttl` | Stream metadata (title, publisher, timestamp path) for LDES clients |
 | `run.mjs` | Windows workaround, patches backslash paths. Not needed on Linux/macOS |
 
+   
    pipeline/shape.ttl
       > defines which entities to track
         
-   ```file
+```file
         @prefix sh:   <http://www.w3.org/ns/shacl#> .
         @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
         @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
@@ -122,7 +123,7 @@ _________
    pipeline/focusNodes.sparql
       > tells the pipeline how to find entities in the dump
 
-   ```file
+```file
        PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 
         SELECT DISTINCT ?entity
@@ -134,7 +135,7 @@ _________
 metadata.ttl
    > describes the LDES stream (replace `<your-username>` and `<your-repo>`)
 
-   ```file
+```file
       @prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
       @prefix p-plan: <http://purl.org/net/p-plan#> .
       @prefix sds:    <https://w3id.org/sds#> .

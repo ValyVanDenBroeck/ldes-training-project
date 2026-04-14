@@ -105,7 +105,7 @@ npm install
 | `run.mjs` | Windows workaround, patches backslash paths. Not needed on Linux/macOS |
 
 
-`pipeline/shape.ttl` — defines which entities to track:
+`pipeline/shape.ttl` : defines which entities to track:
 
 ```turtle
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
@@ -118,7 +118,7 @@ npm install
 ```
 
 
-`pipeline/focusNodes.sparql` — tells the pipeline how to find entities in the dump:
+`pipeline/focusNodes.sparql` : tells the pipeline how to find entities in the dump:
 
 ```sparql
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
@@ -130,7 +130,7 @@ WHERE {
 ```
 
 
-`pipeline/metadata.ttl` — describes the LDES stream (replace `<your-username>` and `<your-repo>`):
+`pipeline/metadata.ttl` : describes the LDES stream (replace `<your-username>` and `<your-repo>`):
 
 ```turtle
 @prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
@@ -154,7 +154,7 @@ WHERE {
 ```
 
 
-`pipeline/rdfc-pipeline-corporate-body.ttl` — the main pipeline definition (replace `<your-username>` and `<your-repo>`):
+`pipeline/rdfc-pipeline-corporate-body.ttl` : the main pipeline definition (replace `<your-username>` and `<your-repo>`):
 
 ```turtle
 @prefix js:   <https://w3id.org/conn/js#>.
@@ -282,7 +282,7 @@ WHERE {
 ```
 
 
-`pipeline/run.mjs` — Windows runner (optional):
+`pipeline/run.mjs` : Windows runner (optional):
 
 > This wrapper patches a known issue where the LDES disk writer generates Windows backslash paths that break the N3 RDF parser. It is not needed on Linux or macOS.
 
@@ -347,17 +347,6 @@ git push
 
 Your first LDES feed will be live at: `https://<your-username>.github.io/<your-repo>/`
 
-
-**8. Run again — observe change detection**
-
-Run the pipeline a second time. You should see `Equal hashes` messages — nothing changed, so no new events are generated.
-
-To see detailed logs:
-
-```bash
-LOG_LEVEL=debug node run.mjs rdfc-pipeline-corporate-body.ttl
-```
-
 _______________
 
 ### Project structure
@@ -388,10 +377,6 @@ _______________
 
 ### Troubleshooting
 
-**"A sds:stream can only carry one specified shape, not 0"**
-
-Harmless warning. The pipeline works correctly.
-
 **Windows: Unexpected "<..\\..\\..\\index.trig>" error**
 
 Use `node run.mjs` instead of `npx @rdfc/js-runner`. The wrapper patches Windows backslash paths.
@@ -404,6 +389,14 @@ Make sure:
 3. The `js:nodeShape` and `js:focusNodes` channels are properly connected
 
 **Debugging**
+
+On Linux / macOS:
+
+```bash
+LOG_LEVEL=debug npx @rdfc/js-runner rdfc-pipeline-corporate-body.ttl
+```
+
+On Windows:
 
 ```bash
 LOG_LEVEL=debug node run.mjs rdfc-pipeline-corporate-body.ttl
@@ -434,4 +427,3 @@ _______________
 __________
 
 License: MIT
-```

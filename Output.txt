@@ -1,4 +1,1 @@
-[ ] a js:GlobRead;
-    js:glob <./dump.rdf>;
-    js:output <raw/writer>;
-    js:closeOnEnd "true"^^xsd:boolean.
+Get-Content node_modules/@rdfc/dumps-to-feed-processor-ts/dist/index.js -TotalCount 150

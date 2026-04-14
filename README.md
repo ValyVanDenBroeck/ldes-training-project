@@ -1,13 +1,15 @@
-# LDES Hands-On Implementation guide for EU Corporate Body Vocabulary
+# Linked Data Event Streams
+
+## A hands-on implementation guide for the EU Corporate Body Vocabulary
 
 A guide to a hands-on implementation of a [Linked Data Event Stream (LDES)](https://w3id.org/ldes/specification) feed for the [EU Corporate Body authority table](https://op.europa.eu/en/web/eu-vocabularies/dataset/-/resource?uri=http://publications.europa.eu/resource/dataset/corporate-body), built as part of the online course **_Publishing Data with Linked Data Event Streams: Why and How_** on the [Interoperable Europe Academy](https://interoperable-europe.ec.europa.eu/collection/interoperable-europe-academy/solution/publishing-data-linked-data-event-streams-why-and-how).
 
 
-## What we will build
+### What we will build
 
 We will take a static **SKOS vocabulary** the [EU Corporate Body authority table](https://op.europa.eu/en/web/eu-vocabularies/dataset/-/resource?uri=http://publications.europa.eu/resource/dataset/corporate-body), published by the [Publications Office of the European Union]([url](https://op.europa.eu/en/home)), and transform it into a **Linked Data Event Stream**.
 
-Each corporate body in the vocabulary becomes a tracked member. When the pipeline runs, it compares the current state of the vocabulary against the previous one and generates **ActivityStreams events**:
+Each corporate body in the vocabulary becomes a tracked member. When the pipeline runs (periodically), it compares the current state of the vocabulary against the previous one and generates **ActivityStreams events**:
 
 - `as:Create` : when a new corporate body appears
 - `as:Update` : when an existing corporate body is modified
@@ -59,7 +61,7 @@ mkdir -p pipeline docs
 
 2. Set up the pipeline and install the required dependencies defined in _package.json _
 
-package.json
+pipeline/package.json
 
 ```file
 {
@@ -88,16 +90,26 @@ npm init -y
 npm install
 ```
 
+3. Create the pipeline configuration files
 
+pipeline/shape.ttl
 
+```file
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 
-### Local development
+<#ActivityShape> a sh:NodeShape ;
+    rdfs:comment "Shape targeting SKOS Concepts in the Corporate Body vocabulary" ;
+    sh:targetClass skos:Concept .
+```
+
 
 On Linux:
 
 ```bash
 cd pipeline
-npm install
+npm ci
 npx @rdfc/js-runner rdfc-pipeline.ttl
 ```
 
@@ -105,7 +117,7 @@ On Windows:
 
 ```bash
 cd pipeline
-npm install
+npm ci
 node run.mjs rdfc-pipeline-corporate-body.ttl
 ```
 

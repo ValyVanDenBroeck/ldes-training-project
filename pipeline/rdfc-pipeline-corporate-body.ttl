@@ -153,4 +153,4 @@
 [ ] a js:LdesDiskWriter;
     js:dataInput <bucketized/reader>;
     js:metadataInput <metadata/bucketized/reader>;
-     js:directory "../docs".
+     js:directory <../docs>.

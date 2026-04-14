@@ -1,9 +1,6 @@
-S C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline> npx @rdfc/js-runner rdfc-pipeline-corporate-body.ttl
-2026-04-14T01:08:32.206Z {file-utils-processors-ts} [globRead] info: Reading file 'C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline\shape.ttl' (from glob pattern 'C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/shape.ttl')
-2026-04-14T01:08:32.216Z {file-utils-processors-ts} [globRead] info: Reading file 'C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline\focusNodes.sparql' (from glob pattern 'C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/focusNodes.sparql')
-2026-04-14T01:08:32.222Z {file-utils-processors-ts} [globRead] info: Reading file 'C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline\metadata.ttl' (from glob pattern 'C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/metadata.ttl')
-A sds:stream can only carry one specified shape, not 0
-A sds:stream can only carry one specified shape, not 0
-2026-04-14T01:08:42.237Z {sds-processors-ts} [TimebasedBucketizer] info: Creating new year bucket with timestamp 2026-01-01T00:00:00.000Z and timespan 31536000000.
-2026-04-14T01:08:43.550Z {sds-processors-ts} [ExitHandler] error: [handleExit] Uncaught Exception: Error - Unexpected "<..\\..\\..\\index.trig>" on line 1.
-PS C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline> 
+Jim@DESKTOP-FF5PDL5 MINGW64 ~/Documents/GitHub/ldes-training-project/pipeline (main)
+$ find node_modules/@rdfc/sds-processor-ts -name ".js" 
+feed-state/                       node_modules/                     rdfc-pipeline-corporate-body.ttl
+focusNodes.sparql                 output.txt                        shape.ttl
+leveldb/                          package.json
+metadata.ttl                      package-lock.json

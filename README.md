@@ -98,6 +98,14 @@ _________
 
 **3. Create the pipeline configuration files**
 
+| File | Purpose |
+|------|---------|
+| `rdfc-pipeline-corporate-body.ttl` | Pipeline definition: fetching, diffing, fragmenting, writing |
+| `shape.ttl` | SHACL shape targeting `skos:Concept`, it tells the pipeline which entities to track |
+| `focusNodes.sparql` | SPARQL query selecting all `skos:Concept` entities from the dump |
+| `metadata.ttl` | Stream metadata (title, publisher, timestamp path) for LDES clients |
+| `run.mjs` | Windows workaround, patches backslash paths. Not needed on Linux/macOS |
+
    pipeline/shape.ttl
         > defines which entities to track
         
@@ -121,7 +129,161 @@ _________
         WHERE {
           ?entity a skos:Concept .
         }
-   ``` 
+   ```
+
+metadata.ttl
+   > describes the LDES stream (replace <your-username> and <your-repo>)
+
+   ```file
+      @prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+      @prefix p-plan: <http://purl.org/net/p-plan#> .
+      @prefix sds:    <https://w3id.org/sds#> .
+      @prefix dcat:   <https://www.w3.org/ns/dcat#> .
+      @prefix ldes:   <https://w3id.org/ldes#> .
+      @prefix as:     <https://www.w3.org/ns/activitystreams#> .
+
+      <https://<your-username>.github.io/<your-repo>/corporate-body/CorporateBodyStream>
+          a                     sds:Stream ;
+          p-plan:wasGeneratedBy [ a            p-plan:Activity ;
+                            rdfs:comment "Pipeline to publish EU Corporate Body vocabulary as LDES" ] ;
+          sds:carries           [ a sds:Member ] ;
+          sds:shape             <https://<your-username>.github.io/<your-repo>/shape.ttl#ActivityShape> ;
+          sds:dataset           [ a                  dcat:Dataset ;
+                                  dcat:title         "EU Corporate Body Vocabulary LDES Feed"@en ;
+                                  dcat:publisher     <http://publications.europa.eu/resource/authority/corporate-body> ;
+                                  ldes:timestampPath as:published ;
+                                  dcat:identifier    <http://publications.europa.eu/resource/dataset/corporate-body> ] .
+   ```
+
+rdfc-pipeline-corporate-body.ttl
+   > the main pipeline definition (replace <your-username> and <your-repo>)
+
+```file
+      @prefix js:   <https://w3id.org/conn/js#>.
+      @prefix :     <https://w3id.org/conn#>.
+      @prefix owl:  <http://www.w3.org/2002/07/owl#>.
+      @prefix xsd:  <http://www.w3.org/2001/XMLSchema#>.
+      @prefix tree: <https://w3id.org/tree#>.
+      @prefix as:   <https://www.w3.org/ns/activitystreams#>.
+      @prefix cb-as:  <https://<your-username>.github.io/<your-repo>/corporate-body/>.
+      
+      <> owl:imports <./node_modules/@rdfc/js-runner/ontology.ttl>.
+      <> owl:imports <./node_modules/@rdfc/js-runner/channels/file.ttl>.
+      <> owl:imports <./node_modules/@rdfc/file-utils-processors-ts/processors.ttl>.
+      <> owl:imports <./node_modules/@rdfc/http-utils-processor-ts/processors.ttl>.
+      <> owl:imports <./node_modules/@rdfc/dumps-to-feed-processor-ts/processor.ttl>.
+      <> owl:imports <./node_modules/@rdfc/sds-processors-ts/configs/bucketizer.ttl>.
+      <> owl:imports <./node_modules/@rdfc/sds-processors-ts/configs/sdsify.ttl>.
+      <> owl:imports <./node_modules/@rdfc/sds-processors-ts/configs/ldes_disk_writer.ttl>.
+      
+      # --- Channels ---
+      
+      <raw/writer> a js:JsWriterChannel.
+      <raw/reader> a js:JsReaderChannel.
+      [ ] a js:JsChannel; :reader <raw/reader>; :writer <raw/writer>.
+      
+      <feed/writer> a js:JsWriterChannel.
+      <feed/reader> a js:JsReaderChannel.
+      [ ] a js:JsChannel; :reader <feed/reader>; :writer <feed/writer>.
+      
+      <sds/writer> a js:JsWriterChannel.
+      <sds/reader> a js:JsReaderChannel.
+      [ ] a js:JsChannel; :reader <sds/reader>; :writer <sds/writer>.
+      
+      <bucketized/writer> a js:JsWriterChannel.
+      <bucketized/reader> a js:JsReaderChannel.
+      [ ] a js:JsChannel; :reader <bucketized/reader>; :writer <bucketized/writer>.
+      
+      <metadata/writer> a js:JsWriterChannel.
+      <metadata/reader> a js:JsReaderChannel.
+      [ ] a js:JsChannel; :reader <metadata/reader>; :writer <metadata/writer>.
+      
+      <metadata/bucketized/writer> a js:JsWriterChannel.
+      <metadata/bucketized/reader> a js:JsReaderChannel.
+      [ ] a js:JsChannel; :reader <metadata/bucketized/reader>; :writer <metadata/bucketized/writer>.
+      
+      <shape/writer> a js:JsWriterChannel.
+      <shape/reader> a js:JsReaderChannel.
+      [ ] a js:JsChannel; :reader <shape/reader>; :writer <shape/writer>.
+      
+      <focusNodes/writer> a js:JsWriterChannel.
+      <focusNodes/reader> a js:JsReaderChannel.
+      [ ] a js:JsChannel; :reader <focusNodes/reader>; :writer <focusNodes/writer>.
+      
+      # --- Processors ---
+      
+      [ ] a js:HttpFetch;
+          js:url "https://op.europa.eu/o/opportal-service/euvoc-download-handler?cellarURI=http%3A%2F%2Fpublications.europa.eu%2Fresource%2Fdistribution%2Fcorporate-body%2F20260318-0%2Frdf%2Fskos_core%2Fcorporatebodies-skos.rdf&fileName=corporatebodies-skos.rdf";
+          js:writer <raw/writer>;
+          js:options [ js:closeOnEnd true ].
+      
+      [ ] a js:GlobRead;
+          js:glob <./shape.ttl>;
+          js:output <shape/writer>;
+          js:closeOnEnd "true"^^xsd:boolean.
+      
+      [ ] a js:GlobRead;
+          js:glob <./focusNodes.sparql>;
+          js:output <focusNodes/writer>;
+          js:closeOnEnd "true"^^xsd:boolean.
+      
+      [ ] a js:DumpsToFeed;
+          js:dump <raw/reader>;
+          js:output <feed/writer>;
+          js:feedname "corporate-body";
+          js:flush "false"^^xsd:boolean;
+          js:dumpContentType "application/rdf+xml";
+          js:focusNodesStrategy "sparql";
+          js:nodeShapeIri "https://<your-username>.github.io/<your-repo>/shape.ttl#ActivityShape";
+          js:nodeShape <shape/reader>;
+          js:focusNodes <focusNodes/reader>;
+          js:dbDir <./leveldb/>.
+      
+      [ ] a js:Sdsify;
+          js:input <feed/reader>;
+          js:output <sds/writer>;
+          js:stream cb-as:CorporateBodyStream;
+          js:typeFilter as:Create, as:Update, as:Delete;
+          js:shape """
+              @prefix sh: <http://www.w3.org/ns/shacl#> .
+              @prefix as: <https://www.w3.org/ns/activitystreams#> .
+              [ ] a sh:NodeShape ;
+                  sh:xone (
+                      [ a sh:NodeShape ; sh:targetClass as:Create ]
+                      [ a sh:NodeShape ; sh:targetClass as:Update ]
+                      [ a sh:NodeShape ; sh:targetClass as:Delete ]
+                  ).
+          """.
+      
+      [ ] a js:GlobRead;
+          js:glob <./metadata.ttl>;
+          js:output <metadata/writer>;
+          js:closeOnEnd "true"^^xsd:boolean.
+      
+      [ ] a js:Bucketize;
+          js:channels [
+                js:dataInput <sds/reader>;
+                js:dataOutput <bucketized/writer>;
+                js:metadataInput <metadata/reader>;
+                js:metadataOutput <metadata/bucketized/writer>;
+            ];
+          js:bucketizeStrategy ( [
+                                     a tree:TimebasedFragmentation;
+                                     tree:timestampPath as:published;
+                                     tree:maxSize 100;
+                                     tree:k 4;
+                                     tree:minBucketSpan 2592000;
+                                 ]);
+          js:savePath <./feed-state/buckets_save.json>;
+          js:outputStreamId cb-as:CorporateBodyStream.
+      
+      [ ] a js:LdesDiskWriter;
+          js:dataInput <bucketized/reader>;
+          js:metadataInput <metadata/bucketized/reader>;
+          js:directory <../docs>.
+   ```
+
+
    
 
 

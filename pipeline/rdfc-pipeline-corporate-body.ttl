@@ -62,6 +62,12 @@
     :reader <shape/reader>;
     :writer <shape/writer>.
 
+<focusNodes/writer> a js:JsWriterChannel.
+<focusNodes/reader> a js:JsReaderChannel.
+[ ] a js:JsChannel;
+    :reader <focusNodes/reader>;
+    :writer <focusNodes/writer>.
+
 
 #########################################
 # Processor definitions
@@ -79,15 +85,21 @@
     js:output <shape/writer>;
     js:closeOnEnd "true"^^xsd:boolean.
 
+[ ] a js:GlobRead;
+    js:glob <./focusNodes.sparql>;
+    js:output <focusNodes/writer>;
+    js:closeOnEnd "true"^^xsd:boolean.
+
 [ ] a js:DumpsToFeed;
     js:dump <raw/reader>;
     js:output <feed/writer>;
     js:feedname "corporate-body";
     js:flush "false"^^xsd:boolean;
     js:dumpContentType "application/rdf+xml";
-    js:focusNodesStrategy "extract";
+    js:focusNodesStrategy "sparql";
     js:nodeShapeIri "https://ValyVanDenBroeck.github.io/ldes-training-project/shape.ttl#ActivityShape";
     js:nodeShape <shape/reader>;
+    js:focusNodes <focusNodes/reader>;
     js:dbDir <./leveldb/>.
 
 [ ] a js:Sdsify;

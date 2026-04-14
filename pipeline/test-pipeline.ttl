@@ -1,0 +1,26 @@
+@prefix js:   <https://w3id.org/conn/js#>.
+@prefix :     <https://w3id.org/conn#>.
+@prefix owl:  <http://www.w3.org/2002/07/owl#>.
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#>.
+
+<> owl:imports <./node_modules/@rdfc/js-runner/ontology.ttl>.
+<> owl:imports <./node_modules/@rdfc/js-runner/channels/file.ttl>.
+<> owl:imports <./node_modules/@rdfc/http-utils-processor-ts/processors.ttl>.
+<> owl:imports <./node_modules/@rdfc/file-utils-processors-ts/processors.ttl>.
+
+<out/writer> a js:JsWriterChannel.
+<out/reader> a js:JsReaderChannel.
+[ ] a js:JsChannel;
+    :reader <out/reader>;
+    :writer <out/writer>.
+
+[ ] a js:HttpFetch;
+    js:url "https://op.europa.eu/o/opportal-service/euvoc-download-handler?cellarURI=http%3A%2F%2Fpublications.europa.eu%2Fresource%2Fdistribution%2Fcorporate-body%2F20260318-0%2Frdf%2Fskos_core%2Fcorporatebodies-skos.rdf&fileName=corporatebodies-skos.rdf";
+    js:writer <out/writer>;
+    js:options [
+        js:closeOnEnd true;
+    ].
+
+[ ] a js:GlobWrite;
+    js:input <out/reader>;
+    js:path <./test-output.rdf>.

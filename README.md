@@ -63,7 +63,7 @@ _________
    ```
 
 
-**2. Set up the pipeline and install the required dependencies defined in _package.json _**
+**2. Set up the pipeline and install the required dependencies**
 
    pipeline/package.json
         
@@ -120,7 +120,7 @@ _________
    ```
 
    pipeline/focusNodes.sparql
-        > tells the pipeline how to find entities in the dump
+      > tells the pipeline how to find entities in the dump
 
    ```file
        PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
@@ -156,7 +156,7 @@ metadata.ttl
    ```
 
 rdfc-pipeline-corporate-body.ttl
-   > the main pipeline definition (replace `<your-username>' and `<your-repo>`)
+   > the main pipeline definition (replace `<your-username>` and `<your-repo>`)
 
 ```file
       @prefix js:   <https://w3id.org/conn/js#>.

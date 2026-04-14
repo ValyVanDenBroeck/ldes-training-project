@@ -1,8 +1,9 @@
-import path from "path";
-const origJoin = path.join;
-const origRelative = path.relative;
-path.join = (...args) => origJoin(...args).replaceAll("\\", "/");
-path.relative = (...args) => origRelative(...args).replaceAll("\\", "/");
-path.sep = "/";
-
-await import("./node_modules/@rdfc/js-runner/bin/js-runner.js");
+PS C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline> node run.mjs rdfc-pipeline-corporate-body.ttl
+2026-04-14T17:11:56.593Z {file-utils-processors-ts} [globRead] info: Reading file 'C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline\shape.ttl' (from glob pattern 'C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/shape.ttl')
+2026-04-14T17:11:56.618Z {file-utils-processors-ts} [globRead] info: Reading file 'C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline\focusNodes.sparql' (from glob pattern 'C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/focusNodes.sparql')
+2026-04-14T17:11:56.622Z {file-utils-processors-ts} [globRead] info: Reading file 'C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline\metadata.ttl' (from glob pattern 'C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/metadata.ttl')
+A sds:stream can only carry one specified shape, not 0
+A sds:stream can only carry one specified shape, not 0
+2026-04-14T17:12:05.560Z {sds-processors-ts} [TimebasedBucketizer] info: Creating new year bucket with timestamp 2026-01-01T00:00:00.000Z and timespan 31536000000.
+2026-04-14T17:12:19.467Z {dumps-to-feed-processor-ts} [processor] info: All input streams ended, closing writer.
+2026-04-14T17:12:19.468Z {sds-processors-ts} [sdsify] info: Input channel was closed down

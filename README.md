@@ -1,6 +1,3 @@
-Sure. Here's your file with the fixes applied:
-
-```markdown
 # Linked Data Event Streams
 
 ## A hands-on implementation guide for the EU Corporate Body Vocabulary

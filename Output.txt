@@ -1,1 +1,4 @@
-Invoke-WebRequest -Uri "https://op.europa.eu/o/opportal-service/euvoc-download-handler?cellarURI=http%3A%2F%2Fpublications.europa.eu%2Fresource%2Fdistribution%2Fcorporate-body%2F20260318-0%2Frdf%2Fskos_core%2Fcorporatebodies-skos.rdf&fileName=corporatebodies-skos.rdf" -OutFile dump.rdf
+[ ] a js:GlobRead;
+    js:glob <./dump.rdf>;
+    js:output <raw/writer>;
+    js:closeOnEnd "true"^^xsd:boolean.

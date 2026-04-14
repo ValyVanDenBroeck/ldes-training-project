@@ -7,15 +7,15 @@ A guide to a hands-on implementation of a [Linked Data Event Stream (LDES)](http
 
 The goal is to guide you through creating your first LDES.
 
-We will take a static **SKOS vocabulary** — the [EU Corporate Body authority table](https://op.europa.eu/en/web/eu-vocabularies/dataset/-/resource?uri=http://publications.europa.eu/resource/dataset/corporate-body), published by the Publications Office of the European Union, and transform it into a **Linked Data Event Stream**: an immutable, append-only feed that tracks changes over time.
+We will take a static **SKOS vocabulary** the [EU Corporate Body authority table](https://op.europa.eu/en/web/eu-vocabularies/dataset/-/resource?uri=http://publications.europa.eu/resource/dataset/corporate-body), published by the Publications Office of the European Union, and transform it into a **Linked Data Event Stream**.
 
 Each corporate body in the vocabulary becomes a tracked member. When the pipeline runs, it compares the current state of the vocabulary against the previous one and generates **ActivityStreams events**:
 
-- `as:Create` — when a new corporate body appears
-- `as:Update` — when an existing corporate body is modified
-- `as:Delete` — when a corporate body is removed
+- `as:Create` : when a new corporate body appears
+- `as:Update` : when an existing corporate body is modified
+- `as:Delete` : when a corporate body is removed
 
-These events are organized into time-based fragments and published as a collection of static documents. To keep things simple, **we do not use an LDES server** — instead, the feed is served directly via **GitHub Pages**.
+These events are organized into time-based fragments and published as a collection of static documents. To keep things simple, **we do not use an LDES server**. Instead, the feed is served directly via **GitHub Pages**.
 
 Once deployed, the entry point to the LDES will be hosted on your own repository.
 
@@ -33,7 +33,7 @@ The pipeline performs the following steps:
 
 1. **Fetches** the full SKOS dump from the EU Publications Office
 2. **Detects changes** by comparing with previous state stored in LevelDB
-3. **Generates events** — `as:Create` for new, `as:Update` for changed, `as:Delete` for removed
+3. **Generates events**: `as:Create` for new, `as:Update` for changed, `as:Delete` for removed
 4. **Fragments** the events into time-based buckets (max 100 per page) using the TREE specification
 5. **Writes** static TriG files to `docs/`, which GitHub Pages serves as your live LDES
 
@@ -81,11 +81,10 @@ package.json
     }
 }
 ```
+
 Local development
+
 ```bash
-git clone https://github.com/<your-username>/<your-repo>.git
-cd <your-repo>
-mkdir -p pipeline docs
 cd pipeline
 npm init -y
 npm install

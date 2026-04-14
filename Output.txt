@@ -1,13 +1,10 @@
-PS C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline> npx @rdfc/js-runner rdfc-pipeline-corporate-body.ttl
-2026-04-13T23:34:45.033Z {file-utils-processors-ts} [globRead] info: Reading file 'C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline\metadata.ttl' (from glob pattern 'C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/metadata.ttl')
-A sds:stream can only carry one specified shape, not 0
-A sds:stream can only carry one specified shape, not 0
-2026-04-13T23:34:49.572Z {dumps-to-feed-processor-ts} [processor] info: All input streams ended, closing writer.
-2026-04-13T23:34:49.575Z {sds-processors-ts} [sdsify] info: Input channel was closed down
-PS C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline> npx @rdfc/js-runner rdfc-pipeline-corporate-body.ttl
-2026-04-13T23:45:56.817Z {file-utils-processors-ts} [globRead] info: Reading file 'C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline\metadata.ttl' (from glob pattern 'C:/Users/Jim/Documents/GitHub/ldes-training-project/pipeline/metadata.ttl')
-A sds:stream can only carry one specified shape, not 0
-A sds:stream can only carry one specified shape, not 0
-2026-04-13T23:46:01.413Z {dumps-to-feed-processor-ts} [processor] info: All input streams ended, closing writer.
-2026-04-13T23:46:01.414Z {sds-processors-ts} [sdsify] info: Input channel was closed down
-PS C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline> 
+S C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline> Get-Content node_module/@rdfc/dumps-to-feed-processor-ts/processor.ttl
+Get-Content : Cannot find path 'C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline\node_modu
+le\@rdfc\dumps-to-feed-processor-ts\processor.ttl' because it does not exist.
+At line:1 char:1
++ Get-Content node_module/@rdfc/dumps-to-feed-processor-ts/processor.tt ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (C:\Users\Jim\Do...s\processor.ttl:String) [Get-Content  
+   ], ItemNotFoundException
+    + FullyQualifiedErrorId : PathNotFound,Microsoft.PowerShell.Commands.GetContentCommand
+ 

@@ -20,6 +20,8 @@ These events are organized into time-based fragments and published as a collecti
 
 Once deployed, the entry point to the LDES will be hosted on your own repository.
 
+_________
+
 ### How it works
 
 ```
@@ -52,7 +54,7 @@ _________
 
 **Setup the environment**
 
-1. Create a new GitHub repository (e.g. `ldes-my-first-feed`), clone it locally and create the repository structure.
+**1. Create a new GitHub repository (e.g. `ldes-my-first-feed`), clone it locally and create the repository structure.**
 
    ```bash
         git clone https://github.com/<your-username>/<your-repo>.git
@@ -60,7 +62,8 @@ _________
         mkdir -p pipeline docs
    ```
 
-2. Set up the pipeline and install the required dependencies defined in _package.json _
+
+**2. Set up the pipeline and install the required dependencies defined in _package.json _**
 
    pipeline/package.json
         
@@ -81,7 +84,8 @@ _________
               "@rdfc/sds-processors-ts": "^1.4.2"
             }
         }
-    ```
+   ```
+
 
    Local development
         
@@ -89,14 +93,15 @@ _________
         cd pipeline
         npm init -y
         npm install
-    ```
+   ```
 
-3. Create the pipeline configuration files
+
+**3. Create the pipeline configuration files**
 
    pipeline/shape.ttl
         > defines which entities to track
         
-    ```file
+   ```file
         @prefix sh:   <http://www.w3.org/ns/shacl#> .
         @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
         @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
@@ -104,20 +109,26 @@ _________
         <#ActivityShape> a sh:NodeShape ;
             rdfs:comment "Shape targeting SKOS Concepts in the Corporate Body vocabulary" ;
             sh:targetClass skos:Concept .
-     ```
+   ```
 
-    pipeline/focusNodes.sparql
+   pipeline/focusNodes.sparql
         > tells the pipeline how to find entities in the dump
 
-    ```file
+   ```file
        PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 
         SELECT DISTINCT ?entity
         WHERE {
           ?entity a skos:Concept .
         }
-     ``` 
+   ``` 
    
+
+
+
+
+
+
 
 On Linux:
 

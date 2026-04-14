@@ -1,6 +1,5 @@
 Jim@DESKTOP-FF5PDL5 MINGW64 ~/Documents/GitHub/ldes-training-project/pipeline (main)
-$ find node_modules/@rdfc/sds-processor-ts -name ".js" 
-feed-state/                       node_modules/                     rdfc-pipeline-corporate-body.ttl
-focusNodes.sparql                 output.txt                        shape.ttl
-leveldb/                          package.json
-metadata.ttl                      package-lock.json
+$  ls node_modules/@rdfc/ sds-processors-ts/
+ls: cannot access 'sds-processors-ts/': No such file or directory
+node_modules/@rdfc/:
+docs/  dumps-to-feed-processor-ts/  file-utils-processors-ts/  http-utils-processor-ts/  js-runner/  sds-processors-ts/

@@ -28,7 +28,7 @@ _________
 EU Publications Office           RDF-Connect Pipeline             GitHub Pages
 ┌─────────────────────┐       ┌─────────────────────────┐       ┌────────────────┐
 │    SKOS RDF/XML     │──────>│     Fetch > Diff >      │──────>│   Static LDES  │
-│    (data dump)      │       │    Events > Fragment     │       │   TriG files   │
+│    (data dump)      │       │    Events > Fragment    │       │   TriG files   │
 └─────────────────────┘       └─────────────────────────┘       └────────────────┘
 ```
 

@@ -4,8 +4,9 @@
 @prefix dcat:   <https://www.w3.org/ns/dcat#> .
 @prefix ldes:   <https://w3id.org/ldes#> .
 @prefix as:     <https://www.w3.org/ns/activitystreams#> .
+@prefix cb-as:  <https://ValyVanDenBroeck.github.io/ldes-training-project/corporate-body/> .
 
-<https://ValyVanDenBroeck.github.io/ldes-training-project/corporate-body>
+cb-as:CorporateBodyStream
     a                     sds:Stream ;
     p-plan:wasGeneratedBy [ a            p-plan:Activity ;
                             rdfs:comment "Pipeline to publish EU Corporate Body vocabulary as LDES" ] ;
@@ -14,5 +15,5 @@
     sds:dataset           [ a                  dcat:Dataset ;
                             dcat:title         "EU Corporate Body Vocabulary LDES Feed"@en ;
                             dcat:publisher     <http://publications.europa.eu/resource/authority/corporate-body> ;
-                            ldes:timestampPath <https://www.w3.org/ns/activitystreams#published> ;
+                            ldes:timestampPath as:published ;
                             dcat:identifier    <http://publications.europa.eu/resource/dataset/corporate-body> ] .

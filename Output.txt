@@ -1,118 +1,113 @@
-PS C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline> Get-Content node_modules/@rdfc/dumps-to-feed-processor-ts/processor.ttl
-@prefix js: <https://w3id.org/conn/js#>.
-@prefix fno: <https://w3id.org/function/ontology#>.
-@prefix fnom: <https://w3id.org/function/vocabulary/mapping#>.
-@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
-@prefix : <https://w3id.org/conn#>.
-@prefix sh: <http://www.w3.org/ns/shacl#>.
-@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+S C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline> Get-Content node_modules/@rdfc/http-utils-processor-ts/processors.ttl
+@prefix js: <https://w3id.org/conn/js#> .
+@prefix fno: <https://w3id.org/function/ontology#> .
+@prefix fnom: <https://w3id.org/function/vocabulary/mapping#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix : <https://w3id.org/conn#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix dc: <http://purl.org/dc/terms/> .
 
-js:DumpsToFeed a js:JsProcess;
-    js:file <./dist/index.js>;
-    js:function "processor";
+js:HttpFetch a js:JsProcess;
+    js:file <./lib/index.js>;
+    js:function "httpFetch";
     js:location <./>;
     js:mapping [
         a fno:Mapping;
         fno:parameterMapping [
-            a fnom:PositionParameterMapping;
-            fnom:functionParameter "data output channel";
-            fnom:implementationParameterPosition "0"^^xsd:int;
+            a fnom:PositionParameterMapping ;
+            fnom:functionParameter "url";
+            fnom:implementationParameterPosition "0"^^xsd:integer
         ], [
-            a fnom:PositionParameterMapping;
-            fnom:functionParameter "feedname";
-            fnom:implementationParameterPosition "1"^^xsd:int;
+           a fnom:PositionParameterMapping ;
+           fnom:functionParameter "writer";
+           fnom:implementationParameterPosition "1"^^xsd:integer
         ], [
-            a fnom:PositionParameterMapping;
-            fnom:functionParameter "flush database";
-            fnom:implementationParameterPosition "2"^^xsd:int;
-        ], [
-            a fnom:PositionParameterMapping;
-            fnom:functionParameter "dump";
-            fnom:implementationParameterPosition "3"^^xsd:int;
-        ], [
-            a fnom:PositionParameterMapping;
-            fnom:functionParameter "dump content type";
-            fnom:implementationParameterPosition "4"^^xsd:int;
-        ], [
-            a fnom:PositionParameterMapping;
-            fnom:functionParameter "focus nodes strategy";
-            fnom:implementationParameterPosition "5"^^xsd:int;
-        ], [
-            a fnom:PositionParameterMapping;
-            fnom:functionParameter "node shape IRI";
-            fnom:implementationParameterPosition "6"^^xsd:int;
-        ], [
-             a fnom:PositionParameterMapping;
-             fnom:functionParameter "node shape";
-             fnom:implementationParameterPosition "7"^^xsd:int;
-        ], [
-            a fnom:PositionParameterMapping;
-            fnom:functionParameter "focus nodes";
-            fnom:implementationParameterPosition "8"^^xsd:int;
-        ], [
-             a fnom:PositionParameterMapping;
-             fnom:functionParameter "level db directory";
-             fnom:implementationParameterPosition "9"^^xsd:int;
-         ];
+            a fnom:PositionParameterMapping ;
+            fnom:functionParameter "options";
+            fnom:implementationParameterPosition "2"^^xsd:integer
+        ]
     ].
 
-[ ] a sh:NodeShape;
-    sh:targetClass js:DumpsToFeed;
+[] a sh:NodeShape;
+    sh:targetClass js:HttpFetchAuth;
     sh:property [
-        sh:class :WriterChannel;
-        sh:path js:output;
-        sh:name "data output channel";
-        sh:maxCount 1;
-        sh:minCount 1;
-    ], [
+        sh:path js:type;
+        sh:name "type";
         sh:datatype xsd:string;
-        sh:path js:feedname;
-        sh:name "feedname";
-        sh:maxCount 1;
         sh:minCount 1;
-    ], [
-        sh:datatype xsd:boolean;
-        sh:path js:flush;
-        sh:name "flush database";
-        sh:maxCount 1;
-        sh:minCount 1;
-    ], [
-        sh:class :ReaderChannel;
-        sh:path js:dump;
-        sh:name "dump";
-        sh:maxCount 1;
-        sh:minCount 1;
-    ], [
-        sh:datatype xsd:string;
-        sh:path js:dumpContentType;
-        sh:name "dump content type";
-        sh:maxCount 1;
-        sh:minCount 1;
-    ], [
-        sh:datatype xsd:string;
-        sh:path js:focusNodesStrategy;
-        sh:name "focus nodes strategy";
-        sh:maxCount 1;
-        sh:minCount 1;
-    ], [
-        sh:datatype xsd:string;
-        sh:path js:nodeShapeIri;
-        sh:name "node shape IRI";
-        sh:minCount 1;
-        sh:maxCount 1;
-    ], [
-        sh:class :ReaderChannel;
-        sh:path js:nodeShape;
-        sh:name "node shape";
-        sh:maxCount 1;
-    ], [
-        sh:class :ReaderChannel;
-        sh:path js:focusNodes;
-        sh:name "focus nodes";
-        sh:maxCount 1;
-    ], [
-        sh:datatype  xsd:string;
-        sh:path js:dbDir;
-        sh:name "level db directory";
-        sh:maxCount 1;
+        sh:maxCount 1
     ].
+
+[] a sh:NodeShape;
+    sh:targetClass js:HttpFetchOptions;
+    sh:property [
+        sh:path js:method;
+        sh:name "method";
+        sh:datatype xsd:string;
+        sh:maxCount 1
+    ], [
+        sh:path js:headers;
+        sh:name "headers";
+        sh:datatype xsd:string
+    ], [
+        sh:path js:acceptStatusCodes;
+        sh:name "acceptStatusCodes";
+        sh:datatype xsd:string
+    ], [
+        sh:path js:closeOnEnd;
+        sh:name "closeOnEnd";
+        sh:datatype xsd:boolean;
+        sh:maxCount 1
+    ], [
+        sh:path js:timeOutMilliseconds;
+        sh:name "timeOutMilliseconds";
+        sh:datatype xsd:integer;
+        sh:maxCount 1
+    ], [
+       sh:path js:HttpFetchAuth;
+       sh:class js:HttpFetchAuth;
+       sh:name "auth";
+       sh:maxCount 1
+    ], [
+       sh:path js:cron;
+       sh:name "cron";
+       sh:datatype xsd:string;
+       sh:maxCount 1
+    ], [
+        sh:path js:runOnInit;
+        sh:name "runOnInit";
+        sh:datatype xsd:boolean;
+        sh:maxCount 1
+    ], [
+       sh:path js:errorsAreFatal;
+       sh:name "errorsAreFatal";
+       sh:class xsd:boolean;
+       sh:maxCount 1;
+       sh:minCount 0;
+    ], [
+        sh:path js:outputAsBuffer;
+        sh:name "outputAsBuffer";
+        sh:datatype xsd:boolean;
+        sh:maxCount 1;
+        sh:minCount 0
+    ].
+
+[] a sh:NodeShape;
+    sh:targetClass js:HttpFetch;
+    sh:property [
+        sh:path js:url;
+        sh:name "url";
+        sh:datatype xsd:string;
+        sh:minCount 1
+    ], [
+        sh:path js:writer;
+        sh:name "writer";
+        sh:class :WriterChannel;
+        sh:maxCount 1;
+        sh:minCount 1
+    ], [
+        sh:path js:options;
+        sh:name "options";
+        sh:class js:HttpFetchOptions;
+        sh:maxCount 1

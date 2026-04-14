@@ -41,13 +41,58 @@ On the first run, every entity is new, so the pipeline generates a `Create` even
 
 _________
 
-## Setup
+### Implementation Guide
 
-### Prerequisites
+**Prerequisites**
 
 - **Git** and a **GitHub account**
 - **Node.js** v22 or higher
 - **npm** (comes with Node.js)
+
+**Setup the environment**
+
+1. Create a new GitHub repository (e.g. `ldes-my-first-feed`), clone it locally and create the repository structure.
+
+```bash
+git clone https://github.com/<your-username>/<your-repo>.git
+cd <your-repo>
+mkdir -p pipeline docs
+```
+
+2. Set up the pipeline and install the required dependencies defined in _package.json _
+
+package.json
+
+```file
+{
+    "name": "ldes-training",
+    "version": "1.0.0",
+    "description": "LDES for EU Corporate Body Vocabulary",
+    "type": "module",
+    "author": "<AUTHOR NAME>",
+    "contributors": ["<CONTRIBUTOR NAME>"],
+    "license": "MIT",
+    "dependencies": {
+      "@rdfc/js-runner": "^1.0.0",
+      "@rdfc/dumps-to-feed-processor-ts": "^1.2.0",
+      "@rdfc/http-utils-processor-ts": "^0.1.2",
+      "@rdfc/file-utils-processors-ts": "^0.6.0",
+      "@rdfc/sds-processors-ts": "^1.4.2"
+    }
+}
+```
+Local development
+```bash
+git clone https://github.com/<your-username>/<your-repo>.git
+cd <your-repo>
+mkdir -p pipeline docs
+cd pipeline
+npm init -y
+npm install
+```
+
+
+
 
 ### Local development
 

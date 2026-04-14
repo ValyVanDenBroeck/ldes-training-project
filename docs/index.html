@@ -5,8 +5,78 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="0; url=index.trig">
     <title>Corporate Body LDES Feed</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #003399;
+            border-bottom: 3px solid #FFCC00;
+            padding-bottom: 10px;
+        }
+        .feed-links {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .feed-links a {
+            display: block;
+            margin: 10px 0;
+            color: #003399;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .feed-links a:hover {
+            text-decoration: underline;
+        }
+        .info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-left: 4px solid #2196F3;
+            margin: 20px 0;
+        }
+        code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
 </head>
 <body>
-    <p>Redirecting to <a href="index.trig">LDES Feed</a>...</p>
+    <h1>EU Corporate Body Vocabulary LDES Feed</h1>
+
+    <div class="info">
+        <p><strong>This page will automatically redirect to the LDES feed in a moment...</strong></p>
+        <p>If you are not redirected, please use the links below.</p>
+    </div>
+
+    <div class="feed-links">
+        <h2>LDES Feed Resources</h2>
+        <a href="index.trig">Main Feed Entry Point (index.trig)</a>
+        <a href="https_3A_2F_2FValyVanDenBroeck.github.io_2Fldes-training-project_2Fcorporate-body_2FCorporateBodyStream/index.trig">Corporate Body Stream View (TriG format)</a>
+    </div>
+
+    <h2>About</h2>
+    <p>This is a Linked Data Event Stream (LDES) feed for the EU Corporate Body vocabulary, published as SKOS concepts by the Publications Office of the European Union.</p>
+
+    <h3>Usage</h3>
+    <p>To consume this feed programmatically, use the following entry point:</p>
+    <code>https://ValyVanDenBroeck.github.io/ldes-training-project/index.trig</code>
+
+    <h3>Format</h3>
+    <p>The feed is published in TriG format (RDF 1.1), which extends Turtle to support named graphs.</p>
+
+    <h3>Resources</h3>
+    <ul>
+        <li><a href="https://semiceu.github.io/LDES-DCAT-AP-feeds/">LDES DCAT-AP Feeds Specification</a></li>
+        <li><a href="https://www.w3.org/TR/trig/">TriG RDF 1.1 Specification</a></li>
+        <li><a href="https://op.europa.eu/en/web/eu-vocabularies/dataset/-/resource?uri=http://publications.europa.eu/resource/dataset/corporate-body">EU Corporate Body Vocabulary</a></li>
+    </ul>
 </body>
 </html>

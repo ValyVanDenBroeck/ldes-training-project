@@ -5,7 +5,7 @@ A guide to a hands-on implementation of a [Linked Data Event Stream (LDES)](http
 
 ## What we will build
 
-We will take a static **SKOS vocabulary** the [EU Corporate Body authority table](https://op.europa.eu/en/web/eu-vocabularies/dataset/-/resource?uri=http://publications.europa.eu/resource/dataset/corporate-body), published by the Publications Office of the European Union, and transform it into a **Linked Data Event Stream**.
+We will take a static **SKOS vocabulary** the [EU Corporate Body authority table](https://op.europa.eu/en/web/eu-vocabularies/dataset/-/resource?uri=http://publications.europa.eu/resource/dataset/corporate-body), published by the [Publications Office of the European Union]([url](https://op.europa.eu/en/home)), and transform it into a **Linked Data Event Stream**.
 
 Each corporate body in the vocabulary becomes a tracked member. When the pipeline runs, it compares the current state of the vocabulary against the previous one and generates **ActivityStreams events**:
 

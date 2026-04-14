@@ -1,0 +1,7 @@
+PS C:\Users\Jim\Documents\GitHub\ldes-training-project\pipeline> Get-Content node_modules/@rdfc/js-runner/package.json | Select-String "bin" -Context 0,3
+
+>   "bin": {
+>     "js-runner": "bin/js-runner.js"
+    },
+    "scripts": {
+      "build": "tsc && tsc-alias",

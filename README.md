@@ -107,7 +107,7 @@ _________
 | `run.mjs` | Windows workaround, patches backslash paths. Not needed on Linux/macOS |
 
    pipeline/shape.ttl
-        > defines which entities to track
+      > defines which entities to track
         
    ```file
         @prefix sh:   <http://www.w3.org/ns/shacl#> .
@@ -132,7 +132,7 @@ _________
    ```
 
 metadata.ttl
-   > describes the LDES stream (replace <your-username> and <your-repo>)
+   > describes the LDES stream (replace `<your-username>` and `<your-repo>`)
 
    ```file
       @prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
@@ -156,7 +156,7 @@ metadata.ttl
    ```
 
 rdfc-pipeline-corporate-body.ttl
-   > the main pipeline definition (replace <your-username> and <your-repo>)
+   > the main pipeline definition (replace `<your-username>' and `<your-repo>`)
 
 ```file
       @prefix js:   <https://w3id.org/conn/js#>.

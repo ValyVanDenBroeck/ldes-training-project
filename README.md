@@ -284,20 +284,27 @@ rdfc-pipeline-corporate-body.ttl
           js:directory <../docs>.
    ```
 
+pipeline/run.mjs
+> Windows runner (optional)
+> This wrapper patches a known issue where the LDES disk writer generates Windows backslash paths that break the N3 RDF parser. It is not needed on Linux or macOS.
 
-   
+```file
+import path from "path";
+const origJoin = path.join;
+const origRelative = path.relative;
+path.join = (...args) => origJoin(...args).replaceAll("\\", "/");
+path.relative = (...args) => origRelative(...args).replaceAll("\\", "/");
+path.sep = "/";
 
+await import("./node_modules/@rdfc/js-runner/bin/js-runner.js");
+```
 
-
-
-
-
+**4. Run the pipeline**
 
 On Linux:
 
 ```bash
 cd pipeline
-npm ci
 npx @rdfc/js-runner rdfc-pipeline.ttl
 ```
 
@@ -305,10 +312,46 @@ On Windows:
 
 ```bash
 cd pipeline
-npm ci
 node run.mjs rdfc-pipeline-corporate-body.ttl
 ```
 
+**5. Deploy as Github static pages**
+> Go to your repository `Settings` > `Pages`, set the source to the `main` branch and the `/docs` folder. 
+
+Local development
+```bash
+git add .
+git commit -m "Initial LDES feed"
+git push
+```
+Your first LDES feed will be live at: `https://<your-username>.github.io/<your-repo>/`
+
+_______________
+
+### Technologies & Further Reading
+
+| Technology | Role |
+|------------|------|
+| [LDES](https://w3id.org/ldes/specification) | Linked Data Event Streams specification |
+| [TREE](https://treecg.github.io/specification/) | Fragmentation and pagination |
+| [RDF-Connect](https://rdf-connect.github.io/rdfc.github.io/) | Declarative pipeline framework |
+| [SHACL](https://www.w3.org/TR/shacl/) | Shape-based entity selection |
+| [SKOS](https://www.w3.org/TR/skos-reference/) | Source vocabulary model |
+| [ActivityStreams](https://www.w3.org/TR/activitystreams-core/) | Event types (Create, Update, Delete) |
+| [GitHub Pages](https://pages.github.com/) | Static hosting |
+
+**Further reading**
+
+- [LDES DCAT-AP Feeds Specification](https://semiceu.github.io/LDES-DCAT-AP-feeds/index.html)
+- [LDES Implementation Reports](https://semiceu.github.io/LDES-implementation-reports/cultural-heritage-feeds/)
+- [EU Vocabularies Portal](https://op.europa.eu/en/web/eu-vocabularies)
+- [RDF-Connect Documentation](https://rdf-connect.github.io/rdfc.github.io/)
+- [Interoperable Europe Academy — LDES Course](https://interoperable-europe.ec.europa.eu/collection/interoperable-europe-academy/solution/publishing-data-linked-data-event-streams-why-and-how)
+
+
+__________
+License
+MIT
 
 
 

@@ -4,14 +4,14 @@
 @prefix dcat:   <https://www.w3.org/ns/dcat#> .
 @prefix ldes:   <https://w3id.org/ldes#> .
 @prefix as:     <https://www.w3.org/ns/activitystreams#> .
-@prefix cb-as:  <https://ValyVanDenBroeck.github.io/ldes-training-project/corporate-body/> .
+@prefix cb-as:  <https://<your-username>.github.io/<your-repo>/corporate-body/> .
 
 cb-as:CorporateBodyStream
     a                     sds:Stream ;
     p-plan:wasGeneratedBy [ a                   p-plan:Activity ;
                             rdfs:comment "Pipeline to publish EU Corporate Body vocabulary as LDES" ] ;
     sds:carries           [ a sds:Member ] ;
-    sds:shape             <https://ValyVanDenBroeck.github.io/ldes-training-project/shape.ttl#ActivityShape> ;
+    sds:shape             <https://<your-username>.github.io/<your-repo>/shape.ttl#ActivityShape> ;
     sds:dataset           [ a                  dcat:Dataset ;
                             dcat:title         "EU Corporate Body Vocabulary LDES Feed"@en ;
                             dcat:publisher     <http://publications.europa.eu/resource/authority/corporate-body> ;

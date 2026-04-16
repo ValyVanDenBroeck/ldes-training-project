@@ -4,7 +4,7 @@
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#>.
 @prefix tree: <https://w3id.org/tree#>.
 @prefix as:   <https://www.w3.org/ns/activitystreams#>.
-@prefix cb-as:  <https://ValyVanDenBroeck.github.io/ldes-training-project/corporate-body/>.
+@prefix cb-as:  <https://<your-username>.github.io/<your-repo>/corporate-body/>.
 
 <> owl:imports <./node_modules/@rdfc/js-runner/ontology.ttl>.
 <> owl:imports <./node_modules/@rdfc/js-runner/channels/file.ttl>.
@@ -97,7 +97,7 @@
     js:flush "false"^^xsd:boolean;
     js:dumpContentType "application/rdf+xml";
     js:focusNodesStrategy "sparql";
-    js:nodeShapeIri "https://ValyVanDenBroeck.github.io/ldes-training-project/shape.ttl#ActivityShape";
+    js:nodeShapeIri "https://<your-username>.github.io/<your-repo>/shape.ttl#ActivityShape";
     js:nodeShape <shape/reader>;
     js:focusNodes <focusNodes/reader>;
     js:dbDir <./leveldb/>.

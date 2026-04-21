@@ -106,7 +106,9 @@ npm install
 | `metadata.ttl` | Stream metadata (title, publisher, timestamp path) for LDES clients |
 | `run.mjs` | Windows workaround, patches backslash paths. Not needed on Linux/macOS |
 
-⚠️ Important: Replace <your-username> and <your-repo>
+________________
+
+⚠️ **Important: Replace `<your-username>` and `<your-repo>`**
 
 Several pipeline configuration files contain placeholder values that must be replaced with your actual GitHub username and repository name before running the pipeline. The table below shows exactly which files and which values need to be updated:
 
@@ -116,6 +118,7 @@ Several pipeline configuration files contain placeholder values that must be rep
 | `pipeline/metadata.ttl` | `<your-username>` and `<your-repo>` in the stream IRI and shape reference |
 | `pipeline/rdfc-pipeline-corporate-body.ttl` | `<your-username>` and `<your-repo>` in `cb-as:` prefix and `js:nodeShapeIri` |
 
+_________________-
 
 `pipeline/shape.ttl` : defines which entities to track:
 

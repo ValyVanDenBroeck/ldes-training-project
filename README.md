@@ -110,10 +110,11 @@ npm install
 
 Several pipeline configuration files contain placeholder values that must be replaced with your actual GitHub username and repository name before running the pipeline. The table below shows exactly which files and which values need to be updated:
 
-File	Placeholders to replace
-pipeline/shape.ttl	<your-username> and <your-repo> in the NodeShape IRI
-pipeline/metadata.ttl	<your-username> and <your-repo> in the stream IRI and shape reference
-pipeline/rdfc-pipeline-corporate-body.ttl	<your-username> and <your-repo> in cb-as: prefix and js:nodeShapeIri
+| File | Placeholders to replace |
+> |------|------------------------|
+> | `pipeline/shape.ttl` | `<your-username>` and `<your-repo>` in the `NodeShape` IRI |
+> | `pipeline/metadata.ttl` | `<your-username>` and `<your-repo>` in the stream IRI and shape reference |
+> | `pipeline/rdfc-pipeline-corporate-body.ttl` | `<your-username>` and `<your-repo>` in `cb-as:` prefix and `js:nodeShapeIri` |
 
 
 `pipeline/shape.ttl` : defines which entities to track:

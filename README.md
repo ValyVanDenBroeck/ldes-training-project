@@ -60,6 +60,8 @@ _________
 git clone https://github.com/<your-username>/<your-repo>.git
 cd <your-repo>
 mkdir -p pipeline docs
+cd pipeline
+mkdir feed-state
 ```
 
 
@@ -104,6 +106,15 @@ npm install
 | `metadata.ttl` | Stream metadata (title, publisher, timestamp path) for LDES clients |
 | `run.mjs` | Windows workaround, patches backslash paths. Not needed on Linux/macOS |
 
+⚠️ Important: Replace <your-username> and <your-repo>
+
+Several pipeline configuration files contain placeholder values that must be replaced with your actual GitHub username and repository name before running the pipeline. The table below shows exactly which files and which values need to be updated:
+
+File	Placeholders to replace
+pipeline/shape.ttl	<your-username> and <your-repo> in the NodeShape IRI
+pipeline/metadata.ttl	<your-username> and <your-repo> in the stream IRI and shape reference
+pipeline/rdfc-pipeline-corporate-body.ttl	<your-username> and <your-repo> in cb-as: prefix and js:nodeShapeIri
+
 
 `pipeline/shape.ttl` : defines which entities to track:
 
@@ -112,7 +123,7 @@ npm install
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 
-<#ActivityShape> a sh:NodeShape ;
+<https://<your-username>.github.io/<your-repo>/shape.ttl#ActivityShape> a sh:NodeShape ;
     rdfs:comment "Shape targeting SKOS Concepts in the Corporate Body vocabulary" ;
     sh:targetClass skos:Concept .
 ```

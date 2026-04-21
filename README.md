@@ -118,7 +118,7 @@ Several pipeline configuration files contain placeholder values that must be rep
 | `pipeline/metadata.ttl` | `<your-username>` and `<your-repo>` in the stream IRI and shape reference |
 | `pipeline/rdfc-pipeline-corporate-body.ttl` | `<your-username>` and `<your-repo>` in `cb-as:` prefix and `js:nodeShapeIri` |
 
-_________________-
+_______________________
 
 `pipeline/shape.ttl` : defines which entities to track:
 
